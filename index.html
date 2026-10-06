@@ -3,474 +3,439 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BioSeq Analyzer</title>
+  <meta name="theme-color" content="#f3f7f4" />
+  <title>BioSeq Analyzer | DNA sequence workspace</title>
   <style>
     :root {
-      --bg: #0f172a;
-      --panel: #111827;
-      --panel-alt: #1f2937;
-      --card: #0b1220;
-      --border: #334155;
-      --text: #e2e8f0;
-      --muted: #94a3b8;
-      --primary: #38bdf8;
-      --primary-strong: #0ea5e9;
-      --success: #34d399;
-      --warning: #fbbf24;
-      --danger: #f87171;
-      --shadow: rgba(15, 23, 42, 0.35);
+      color-scheme: light;
+      --page: #f3f7f4;
+      --surface: #ffffff;
+      --surface-soft: #f7faf8;
+      --ink: #152b25;
+      --muted: #71817b;
+      --line: #e1eae5;
+      --green: #087e65;
+      --green-dark: #075c4c;
+      --green-pale: #e7f5ef;
+      --amber: #b66a13;
+      --amber-pale: #fff4df;
+      --red: #bd4b4b;
+      --red-pale: #fff0ee;
+      --shadow: 0 14px 38px rgba(31, 67, 54, 0.07);
+      --a: #138a70;
+      --c: #4779d0;
+      --g: #d69325;
+      --t: #d75d5d;
     }
 
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #020817 0%, #0f172a 100%);
-      color: var(--text);
+      background:
+        radial-gradient(ellipse at 85% 0%, rgba(194, 230, 211, 0.36), transparent 30rem),
+        var(--page);
+      color: var(--ink);
+      font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
       min-height: 100vh;
     }
-
-    .app {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 32px 20px 48px;
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .app { width: min(1160px, calc(100% - 40px)); margin: 0 auto; padding: 28px 0 56px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark {
+      display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px;
+      color: #fff; background: linear-gradient(145deg, #16a17f, #075c4c);
+      box-shadow: 0 8px 18px rgba(8, 126, 101, 0.2); font-size: 1.25rem; font-weight: 800;
     }
+    .brand-name { margin: 0; font-size: 1.12rem; letter-spacing: -0.03em; }
+    .brand-caption { margin: 3px 0 0; color: var(--muted); font-size: 0.8rem; }
+    .topbar-badge { display: inline-flex; align-items: center; gap: 8px; color: var(--green-dark); font-size: 0.82rem; font-weight: 700; }
+    .topbar-badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #27a77f; }
 
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 24px;
-      flex-wrap: wrap;
+    .hero {
+      position: relative; overflow: hidden; border-radius: 24px; padding: clamp(24px, 5vw, 42px);
+      color: #f4fbf7; background: linear-gradient(115deg, #10392f 0%, #0c6552 68%, #12866a 100%);
+      box-shadow: 0 18px 45px rgba(14, 75, 59, 0.18);
     }
-
-    h1 {
-      margin: 0;
-      font-size: clamp(2rem, 3vw, 2.8rem);
-      letter-spacing: 0.04em;
+    .hero::after {
+      content: ""; position: absolute; width: 310px; height: 310px; border: 1px solid rgba(255,255,255,.12);
+      border-radius: 50%; right: -100px; top: -150px; box-shadow: 0 0 0 32px rgba(255,255,255,.035), 0 0 0 68px rgba(255,255,255,.025);
+      pointer-events: none;
     }
+    .eyebrow { margin: 0 0 10px; color: #a8ddc7; font-size: 0.75rem; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+    .hero h1 { max-width: 650px; margin: 0; font-size: clamp(1.8rem, 4vw, 2.65rem); letter-spacing: -.045em; line-height: 1.12; }
+    .hero-copy { max-width: 600px; margin: 12px 0 0; color: #d1e9df; line-height: 1.6; font-size: .96rem; }
 
-    .badge {
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(56, 189, 248, 0.12);
-      border: 1px solid rgba(56, 189, 248, 0.4);
-      color: var(--primary);
-      font-weight: 600;
-      font-size: 0.9rem;
-      white-space: nowrap;
-    }
-
-    .panel {
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      box-shadow: 0 18px 35px var(--shadow);
-      padding: 20px;
-      margin-bottom: 22px;
-    }
-
-    .input-wrap {
-      display: grid;
-      grid-template-columns: 1.2fr 0.8fr;
-      gap: 22px;
-      align-items: start;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 700;
-      color: #cbd5e1;
-    }
-
-    textarea, input {
-      width: 100%;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: rgba(15, 23, 42, 0.9);
-      color: var(--text);
-      padding: 14px 16px;
-      font: inherit;
-      resize: vertical;
-    }
-
+    .panel, .card, .metric { background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
+    .input-panel { margin-top: 20px; padding: 22px; border-radius: 20px; }
+    .input-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(270px, .65fr); gap: 24px; align-items: start; }
+    .section-label { display: block; margin-bottom: 9px; font-size: .86rem; font-weight: 800; }
+    .input-hint { margin: 0 0 10px; color: var(--muted); font-size: .8rem; }
     textarea {
-      min-height: 150px;
-      line-height: 1.5;
+      display: block; width: 100%; min-height: 148px; resize: vertical; padding: 14px 15px;
+      border: 1px solid #cfddd5; border-radius: 13px; outline: none; background: #fbfdfb;
+      color: var(--ink); font: 500 .91rem/1.65 "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      transition: border-color .18s, box-shadow .18s;
     }
-
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 14px;
+    textarea:focus, input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(8,126,101,.12); }
+    .actions { display: flex; flex-wrap: wrap; gap: 9px; }
+    .button {
+      min-height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 10px 15px; border: 1px solid transparent; border-radius: 11px; font-size: .84rem;
+      font-weight: 750; transition: transform .15s, box-shadow .15s, background .15s;
     }
-
-    .upload-box {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-top: 12px;
+    .button:hover { transform: translateY(-1px); }
+    .button:focus-visible, .record-tab:focus-visible, .copy-button:focus-visible { outline: 3px solid rgba(8,126,101,.32); outline-offset: 2px; }
+    .button-primary { color: #fff; background: var(--green); box-shadow: 0 6px 14px rgba(8,126,101,.18); }
+    .button-primary:hover { background: var(--green-dark); }
+    .button-secondary { color: #36564b; background: #f5f9f6; border-color: var(--line); }
+    .button-secondary:hover { background: #eaf3ed; }
+    .upload-control { margin-top: 18px; }
+    .upload-control input { display: block; width: 100%; color: var(--muted); font-size: .8rem; }
+    input[type="file"]::file-selector-button {
+      margin-right: 10px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 8px;
+      background: #f5f9f6; color: #36564b; font-weight: 700; cursor: pointer;
     }
+    .status { min-height: 20px; margin: 12px 0 0; color: var(--muted); font-size: .82rem; }
+    .status[data-tone="success"] { color: var(--green-dark); }
+    .status[data-tone="error"] { color: var(--red); }
 
-    .file-input {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: rgba(148, 163, 184, 0.08);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px 14px;
+    .results { margin-top: 26px; }
+    .results-heading { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 14px; }
+    .results-heading h2 { margin: 0; font-size: 1.2rem; letter-spacing: -.025em; }
+    .results-heading p { margin: 5px 0 0; color: var(--muted); font-size: .82rem; }
+    .record-tabs { display: flex; flex-wrap: wrap; gap: 7px; margin: 0 0 15px; }
+    .record-tab { padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: #547066; font-size: .79rem; font-weight: 700; }
+    .record-tab[aria-selected="true"] { border-color: var(--green); background: var(--green-pale); color: var(--green-dark); }
+    .summary-line {
+      display: flex; align-items: center; gap: 10px; min-height: 48px; margin: 0 0 14px; padding: 12px 15px;
+      border: 1px solid #cce7d8; border-radius: 13px; background: linear-gradient(90deg, #edf8f1, #f7fbf8);
+      color: #245641; font-size: .9rem; font-weight: 700;
     }
+    .summary-dot { flex: 0 0 auto; width: 9px; height: 9px; border-radius: 50%; background: #16966f; }
+    .summary-line[data-tone="warning"] { color: #84500e; background: var(--amber-pale); border-color: #f0d49d; }
+    .summary-line[data-tone="warning"] .summary-dot { background: #cf8719; }
+    .summary-line[data-tone="error"] { color: #9c3939; background: var(--red-pale); border-color: #f0c6c0; }
+    .summary-line[data-tone="error"] .summary-dot { background: #ca5353; }
+    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; }
+    .metric { min-height: 120px; padding: 17px; border-radius: 16px; }
+    .metric.metric-featured { border-color: #b9dfcb; background: linear-gradient(150deg, #fff 25%, #f0faf4); }
+    .metric-label { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: .73rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .metric-value { margin-top: 12px; font-size: clamp(1.45rem, 3vw, 2rem); font-weight: 850; letter-spacing: -.045em; line-height: 1; }
+    .metric-featured .metric-value { color: var(--green-dark); font-size: clamp(1.8rem, 4vw, 2.5rem); }
+    .metric-note { margin-top: 8px; color: var(--muted); font-size: .75rem; }
 
-    .file-input input {
-      padding: 0;
-      background: transparent;
-      border: none;
-      color: var(--text);
-    }
-
-    button {
-      appearance: none;
-      border: none;
-      border-radius: 12px;
-      padding: 12px 18px;
-      font: inherit;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform 0.15s ease, opacity 0.15s ease;
-    }
-
-    button:hover { transform: translateY(-1px); }
-    button:active { transform: translateY(0); }
-
-    .primary {
-      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-strong) 100%);
-      color: #082f49;
-    }
-
-    .secondary {
-      background: rgba(148, 163, 184, 0.12);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-
-    .metrics {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 16px;
-      margin-top: 16px;
-    }
-
-    .metric {
-      background: rgba(15, 23, 42, 0.7);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 16px;
-    }
-
-    .metric .label {
-      color: var(--muted);
-      font-size: 0.82rem;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-
-    .metric .value {
-      font-size: clamp(1.2rem, 2vw, 1.8rem);
-      font-weight: 800;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 22px;
-    }
-
-    .card {
-      background: rgba(11, 18, 32, 0.9);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
-    }
-
-    .card h3 {
-      margin: 0 0 12px;
-      font-size: 1.15rem;
-    }
-
-    .counts {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(100px, 1fr));
-      gap: 10px;
-    }
-
-    .count-item {
-      background: rgba(148, 163, 184, 0.06);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 10px 12px;
-    }
-
-    .count-item strong {
-      display: block;
-      font-size: 1.2rem;
-      margin-top: 6px;
-    }
-
-    .result-list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: grid;
-      gap: 10px;
-    }
-
-    .result-list li {
-      background: rgba(148, 163, 184, 0.05);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px 12px;
-      color: var(--text);
-      line-height: 1.5;
-      word-break: break-word;
-    }
-
-    .output-box {
-      margin-top: 10px;
-      background: rgba(2, 6, 23, 0.6);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px;
-      color: #dbeafe;
-      overflow-wrap: anywhere;
-      line-height: 1.5;
-      min-height: 48px;
-    }
-
-    .chart {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(90px, 1fr));
-      gap: 12px;
-      margin-top: 10px;
-    }
-
-    .chart-bar {
-      background: rgba(148, 163, 184, 0.06);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 10px;
-      text-align: center;
-    }
-
-    .chart-visual {
-      height: 120px;
-      border-radius: 10px;
-      display: flex;
-      align-items: end;
-      justify-content: center;
-      margin-bottom: 10px;
-      background: rgba(15, 23, 42, 0.75);
-      overflow: hidden;
-      border: 1px solid rgba(148, 163, 184, 0.15);
-    }
-
-    .chart-fill {
-      width: 100%;
-      border-radius: 8px 8px 0 0;
-      min-height: 4px;
-    }
-
-    .empty {
-      color: var(--muted);
-      font-style: italic;
-    }
-
-    .mini {
-      font-size: 0.8rem;
-      color: var(--muted);
-      margin-top: 8px;
-      display: block;
-    }
+    .content-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; margin-top: 15px; }
+    .card { min-width: 0; padding: 19px; border-radius: 17px; }
+    .card-wide { grid-column: 1 / -1; }
+    .card-heading { display: flex; justify-content: space-between; align-items: start; gap: 12px; margin-bottom: 14px; }
+    .card-heading h3 { margin: 0; font-size: .99rem; letter-spacing: -.02em; }
+    .card-heading p { margin: 5px 0 0; color: var(--muted); font-size: .77rem; line-height: 1.45; }
+    .count-total { color: var(--muted); font-size: .75rem; white-space: nowrap; }
+    .composition-bar { display: flex; width: 100%; height: 18px; overflow: hidden; border-radius: 999px; background: #edf2ef; }
+    .composition-segment { min-width: 0; transition: width .3s ease; }
+    .composition-segment.base-A, .swatch.base-A { background: var(--a); }
+    .composition-segment.base-C, .swatch.base-C { background: var(--c); }
+    .composition-segment.base-G, .swatch.base-G { background: var(--g); }
+    .composition-segment.base-T, .swatch.base-T { background: var(--t); }
+    .legend { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; margin-top: 15px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 10px 9px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface-soft); }
+    .swatch { flex: 0 0 auto; width: 10px; height: 10px; border-radius: 3px; }
+    .legend-copy { min-width: 0; }
+    .legend-title { display: flex; align-items: baseline; gap: 5px; font-size: .82rem; font-weight: 850; }
+    .legend-title small { color: var(--muted); font-size: .68rem; font-weight: 600; }
+    .legend-value { display: block; margin-top: 3px; color: var(--muted); font-size: .72rem; }
+    .quality-list, .result-list { list-style: none; display: grid; gap: 8px; margin: 0; padding: 0; }
+    .quality-item { display: flex; gap: 9px; padding: 10px 11px; border-radius: 10px; background: #f5f9f6; color: #456157; font-size: .82rem; line-height: 1.45; }
+    .quality-item::before { content: ""; flex: 0 0 auto; width: 7px; height: 7px; margin-top: 5px; border-radius: 50%; background: #27a77f; }
+    .quality-item.warning { background: var(--amber-pale); color: #84500e; }
+    .quality-item.warning::before { background: #cf8719; }
+    .quality-item.error { background: var(--red-pale); color: #9c3939; }
+    .quality-item.error::before { background: #ca5353; }
+    .site-map { position: relative; height: 54px; margin: 14px 4px 7px; }
+    .site-track { position: absolute; top: 22px; right: 0; left: 0; height: 8px; border-radius: 9px; background: linear-gradient(90deg, #c8e7d7, #76bea0); }
+    .site-marker { position: absolute; top: 12px; z-index: 1; width: 2px; height: 28px; background: var(--green-dark); }
+    .site-marker::after { content: ""; position: absolute; top: -2px; left: -4px; width: 10px; height: 10px; border: 2px solid #fff; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 1px var(--green); }
+    .site-map-label { position: absolute; top: 42px; color: var(--muted); font-size: .68rem; }
+    .result-list li { min-width: 0; padding: 11px 12px; border: 1px solid var(--line); border-radius: 11px; background: #fbfdfb; font-size: .82rem; line-height: 1.5; overflow-wrap: anywhere; }
+    .orf-card { display: grid; grid-template-columns: auto 1fr; align-items: start; gap: 3px 11px; }
+    .orf-rank { grid-row: span 2; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 9px; background: #e5f4eb; color: var(--green-dark); font-size: .75rem; font-weight: 850; }
+    .orf-card.featured { border-color: #b9dfcb; background: #f2faf5; }
+    .orf-title { font-weight: 800; }
+    .orf-meta { color: var(--muted); font-size: .74rem; }
+    .empty-state { color: var(--muted); font-style: italic; }
+    details { border: 1px solid var(--line); border-radius: 12px; background: #fbfdfb; }
+    details + details { margin-top: 9px; }
+    summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 13px; cursor: pointer; font-size: .84rem; font-weight: 800; list-style: none; }
+    summary::-webkit-details-marker { display: none; }
+    summary::after { content: "+"; color: var(--green); font-size: 1.15rem; }
+    details[open] summary::after { content: "−"; }
+    .derived-body { padding: 0 12px 12px; }
+    .derived-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .derived-note { color: var(--muted); font-size: .73rem; }
+    .copy-button { padding: 5px 9px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: #456157; font-size: .72rem; font-weight: 750; }
+    .sequence-output { max-height: 210px; margin: 0; padding: 11px; overflow: auto; border-radius: 9px; background: #f0f5f2; color: #25483b; font: .76rem/1.7 "SFMono-Regular", Consolas, "Liberation Mono", monospace; overflow-wrap: anywhere; white-space: pre-wrap; }
+    .footer-note { margin: 22px 2px 0; color: #82918b; font-size: .74rem; line-height: 1.5; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
     @media (max-width: 760px) {
-      .input-wrap {
-        grid-template-columns: 1fr;
-      }
+      .app { width: min(100% - 28px, 600px); padding-top: 18px; }
+      .input-grid { grid-template-columns: 1fr; gap: 18px; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .content-grid { grid-template-columns: 1fr; }
+      .card-wide { grid-column: auto; }
+      .results-heading { align-items: start; flex-direction: column; }
+    }
+    @media (max-width: 430px) {
+      .topbar-badge { display: none; }
+      .hero { border-radius: 19px; }
+      .input-panel, .card { padding: 16px; }
+      .legend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .actions .button { flex: 1 1 calc(50% - 8px); }
+      .actions .button-primary { flex-basis: 100%; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
     }
   </style>
 </head>
 <body>
-  <div class="app">
-    <div class="topbar">
-      <h1>BioSeq Analyzer</h1>
-      <div class="badge">DNA Analysis Toolkit</div>
-    </div>
-
-    <div class="panel">
-      <div class="input-wrap">
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">B</div>
         <div>
-          <label for="sequenceInput">DNA sequence or FASTA text</label>
-          <textarea id="sequenceInput" placeholder="Paste a DNA sequence here, for example: ATGGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGATAG">ATGGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGATAG</textarea>
+          <p class="brand-name">BioSeq Analyzer</p>
+          <p class="brand-caption">DNA analysis workspace</p>
         </div>
+      </div>
+      <div class="topbar-badge">Local analysis · No upload required</div>
+    </header>
 
+    <section class="hero" aria-labelledby="page-title">
+      <p class="eyebrow">Sequence insights</p>
+      <h1 id="page-title">Make sense of your DNA sequence.</h1>
+      <p class="hero-copy">Explore nucleotide composition, sequence quality, open reading frames and restriction sites in one clear view.</p>
+    </section>
+
+    <section class="panel input-panel" aria-label="Sequence input">
+      <div class="input-grid">
         <div>
-          <label>Actions</label>
+          <label class="section-label" for="sequenceInput">DNA sequence or FASTA</label>
+          <p class="input-hint">Paste a sequence or FASTA records. Each FASTA record is analyzed separately.</p>
+          <textarea id="sequenceInput" spellcheck="false" aria-describedby="sequenceHint">ATGGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGATAG</textarea>
+          <span id="sequenceHint" class="sr-only">Whitespace is ignored. FASTA headers beginning with greater-than are supported.</span>
+        </div>
+        <div>
+          <span class="section-label">Workspace</span>
           <div class="actions">
-            <button class="primary" id="analyzeBtn">Analyze sequence</button>
-            <button class="secondary" id="exampleBtn">Load example</button>
-            <button class="secondary" id="exportBtn">Export report</button>
+            <button class="button button-primary" id="analyzeBtn" type="button">Analyze sequence</button>
+            <button class="button button-secondary" id="exampleBtn" type="button">Load example</button>
+            <button class="button button-secondary" id="exportBtn" type="button">Export report</button>
           </div>
-          <div class="upload-box">
-            <label class="file-input" for="fileInput">
-              <input id="fileInput" type="file" accept=".txt,.fa,.fasta,.seq,.dna" />
-              <span>Upload file</span>
-            </label>
+          <div class="upload-control">
+            <label class="section-label" for="fileInput">Or choose a sequence file</label>
+            <input id="fileInput" type="file" accept=".txt,.fa,.fasta,.seq,.dna" />
           </div>
-          <div class="mini" id="statusText">Ready to analyze.</div>
+          <p class="status" id="statusText" role="status" aria-live="polite">Ready to analyze.</p>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="metrics" id="summaryMetrics">
-      <div class="metric">
-        <div class="label">Length</div>
-        <div class="value" id="lengthValue">0 bp</div>
-      </div>
-      <div class="metric">
-        <div class="label">GC%</div>
-        <div class="value" id="gcValue">0.00%</div>
-      </div>
-      <div class="metric">
-        <div class="label">AT%</div>
-        <div class="value" id="atValue">0.00%</div>
-      </div>
-      <div class="metric">
-        <div class="label">ORFs</div>
-        <div class="value" id="orfValue">0</div>
-      </div>
-    </div>
-
-    <div class="grid" style="margin-top: 22px;">
-      <div class="card">
-        <h3>Base counts</h3>
-        <div class="counts" id="countsGrid"></div>
-      </div>
-
-      <div class="card">
-        <h3>Sequence quality</h3>
-        <ul class="result-list" id="sequenceQuality"></ul>
-      </div>
-
-      <div class="card" style="grid-column: 1 / -1;">
-        <h3>Base composition chart</h3>
-        <div id="baseChart" class="chart"></div>
-      </div>
-
-      <div class="card" style="grid-column: 1 / -1;">
-        <h3>Derived sequences</h3>
-        <div class="result-list">
-          <li>
-            <strong>Cleaned sequence</strong>
-            <div class="output-box" id="cleanedOutput"></div>
-          </li>
-          <li>
-            <strong>Reverse complement</strong>
-            <div class="output-box" id="revCompOutput"></div>
-          </li>
-          <li>
-            <strong>mRNA transcript</strong>
-            <div class="output-box" id="mrnaOutput"></div>
-          </li>
-          <li>
-            <strong>Protein translation</strong>
-            <div class="output-box" id="proteinOutput"></div>
-          </li>
+    <section class="results" aria-labelledby="resultsTitle">
+      <div class="results-heading">
+        <div>
+          <h2 id="resultsTitle">Analysis results</h2>
+          <p id="recordCaption">Overview of the selected sequence</p>
         </div>
       </div>
-
-      <div class="card">
-        <h3>Open reading frames</h3>
-        <ul class="result-list" id="orfResults"></ul>
+      <nav class="record-tabs" id="recordTabs" aria-label="Select FASTA record" hidden></nav>
+      <div class="summary-line" id="summaryLine" role="status">
+        <span class="summary-dot" aria-hidden="true"></span>
+        <span id="summaryText">Analyze a sequence to see your results.</span>
+      </div>
+      <div class="metrics" aria-label="Key sequence metrics">
+        <article class="metric">
+          <div class="metric-label">Sequence length</div>
+          <div class="metric-value" id="lengthValue">0 bp</div>
+          <div class="metric-note">Including any ambiguous symbols</div>
+        </article>
+        <article class="metric metric-featured">
+          <div class="metric-label">GC content</div>
+          <div class="metric-value" id="gcValue">0.00%</div>
+          <div class="metric-note">Calculated from valid A/C/G/T bases</div>
+        </article>
+        <article class="metric">
+          <div class="metric-label">AT content</div>
+          <div class="metric-value" id="atValue">0.00%</div>
+          <div class="metric-note">Calculated from valid A/C/G/T bases</div>
+        </article>
+        <article class="metric">
+          <div class="metric-label">Open reading frames</div>
+          <div class="metric-value" id="orfValue">0</div>
+          <div class="metric-note">At least 30 amino acids</div>
+        </article>
       </div>
 
-      <div class="card">
-        <h3>Restriction sites</h3>
-        <ul class="result-list" id="restrictionResults"></ul>
+      <div class="content-grid">
+        <article class="card">
+          <div class="card-heading">
+            <div><h3>Nucleotide composition</h3><p>Proportions and counts of valid bases</p></div>
+            <span class="count-total" id="validBaseTotal">0 valid bases</span>
+          </div>
+          <div class="composition-bar" id="compositionBar" role="img" aria-label="Base composition"></div>
+          <div class="legend" id="baseLegend"></div>
+        </article>
+
+        <article class="card">
+          <div class="card-heading">
+            <div><h3>Sequence quality</h3><p>Check the symbols included in this record</p></div>
+          </div>
+          <ul class="quality-list" id="sequenceQuality"></ul>
+        </article>
+
+        <article class="card card-wide">
+          <div class="card-heading">
+            <div><h3>Restriction sites</h3><p>Known enzyme recognition sites and their 1-based positions</p></div>
+            <span class="count-total" id="restrictionSummary">0 matches</span>
+          </div>
+          <div class="site-map" id="siteMap" aria-label="Restriction site positions">
+            <div class="site-track"></div>
+            <span class="site-map-label" id="siteMapStart">1</span>
+            <span class="site-map-label" id="siteMapEnd"></span>
+          </div>
+          <ul class="result-list" id="restrictionResults"></ul>
+        </article>
+
+        <article class="card card-wide">
+          <div class="card-heading">
+            <div><h3>Open reading frames</h3><p>Longest predicted ORFs are shown first · minimum 30 amino acids</p></div>
+            <span class="count-total" id="orfSummary">0 detected</span>
+          </div>
+          <ul class="result-list" id="orfResults"></ul>
+        </article>
+
+        <article class="card card-wide">
+          <div class="card-heading">
+            <div><h3>Derived sequences</h3><p>Additional sequence views, available when you need them</p></div>
+          </div>
+          <details>
+            <summary>Cleaned DNA sequence</summary>
+            <div class="derived-body">
+              <div class="derived-toolbar"><span class="derived-note">Whitespace removed; case normalized</span><button class="copy-button" type="button" data-copy="cleanedOutput">Copy</button></div>
+              <pre class="sequence-output" id="cleanedOutput"></pre>
+            </div>
+          </details>
+          <details>
+            <summary>Reverse complement</summary>
+            <div class="derived-body">
+              <div class="derived-toolbar"><span class="derived-note">Ambiguous symbols are represented as N</span><button class="copy-button" type="button" data-copy="revCompOutput">Copy</button></div>
+              <pre class="sequence-output" id="revCompOutput"></pre>
+            </div>
+          </details>
+          <details>
+            <summary>mRNA transcript</summary>
+            <div class="derived-body">
+              <div class="derived-toolbar"><span class="derived-note">T replaced with U</span><button class="copy-button" type="button" data-copy="mrnaOutput">Copy</button></div>
+              <pre class="sequence-output" id="mrnaOutput"></pre>
+            </div>
+          </details>
+          <details>
+            <summary>Protein translation</summary>
+            <div class="derived-body">
+              <div class="derived-toolbar"><span class="derived-note">Translated from the first base in codons of three</span><button class="copy-button" type="button" data-copy="proteinOutput">Copy</button></div>
+              <pre class="sequence-output" id="proteinOutput"></pre>
+            </div>
+          </details>
+        </article>
       </div>
-    </div>
-  </div>
+    </section>
+    <p class="footer-note">For research and educational exploration. ORF predictions use a simple start/stop-codon scan and are not a substitute for curated annotation.</p>
+  </main>
 
   <script>
     const VALID_BASES = "ACGT";
     const COMPLEMENT = { A: "T", T: "A", G: "C", C: "G" };
+    const BASE_COLORS = { A: "#138a70", C: "#4779d0", G: "#d69325", T: "#d75d5d" };
     const BASES = "TCAG";
     const CODONS = [];
-    for (const a of BASES) {
-      for (const b of BASES) {
-        for (const c of BASES) {
-          CODONS.push(a + b + c);
-        }
+    for (const first of BASES) {
+      for (const second of BASES) {
+        for (const third of BASES) CODONS.push(first + second + third);
       }
     }
     const AMINO_ACIDS = "FFLLSSSSYY**CC*WLLLLPPPPHHQQRRRRIIIMTTTTNNKKSSRRVVVVAAAADDEEGGGG";
     const CODON_TABLE = {};
-    for (let i = 0; i < CODONS.length; i++) {
-      CODON_TABLE[CODONS[i]] = AMINO_ACIDS[i];
-    }
+    for (let index = 0; index < CODONS.length; index++) CODON_TABLE[CODONS[index]] = AMINO_ACIDS[index];
 
     const STOP_CODONS = new Set(["TAA", "TAG", "TGA"]);
     const RESTRICTION_ENZYMES = {
-      BamHI: "GGATCC",
-      EcoRI: "GAATTC",
-      HindIII: "AAGCTT",
-      KpnI: "GGTACC",
-      NcoI: "CCATGG",
-      NdeI: "CATATG",
-      NotI: "GCGGCCGC",
-      PstI: "CTGCAG",
-      SacI: "GAGCTC",
-      SmaI: "CCCGGG",
-      XbaI: "TCTAGA",
-      XhoI: "CTCGAG",
+      BamHI: "GGATCC", EcoRI: "GAATTC", HindIII: "AAGCTT", KpnI: "GGTACC",
+      NcoI: "CCATGG", NdeI: "CATATG", NotI: "GCGGCCGC", PstI: "CTGCAG",
+      SacI: "GAGCTC", SmaI: "CCCGGG", XbaI: "TCTAGA", XhoI: "CTCGAG",
     };
+    let analyses = [];
+    let selectedRecordIndex = 0;
 
     function cleanSequence(rawText) {
+      return rawText.replace(/\s+/g, "").toUpperCase();
+    }
+
+    function parseRecords(rawText) {
       const lines = rawText.split(/\r?\n/);
-      const sequenceLines = lines.filter((line) => !line.trim().startsWith(">"));
-      return sequenceLines.join("").replace(/\s+/g, "").toUpperCase();
+      const hasHeaders = lines.some((line) => line.trim().startsWith(">"));
+      if (!hasHeaders) {
+        const sequence = cleanSequence(rawText);
+        return sequence ? [{ header: "Sequence 1", sequence }] : [];
+      }
+
+      const records = [];
+      let header = "";
+      let chunks = [];
+      let insideRecord = false;
+      const saveRecord = () => {
+        const sequence = cleanSequence(chunks.join(""));
+        if (sequence) records.push({ header: header || `Sequence ${records.length + 1}`, sequence });
+      };
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith(">")) {
+          if (insideRecord) saveRecord();
+          header = trimmed.slice(1).trim() || `Sequence ${records.length + 1}`;
+          chunks = [];
+          insideRecord = true;
+        } else if (insideRecord && trimmed) {
+          chunks.push(trimmed);
+        }
+      }
+      if (insideRecord) saveRecord();
+      return records;
     }
 
-    function findInvalidCharacters(sequence) {
-      return [...new Set(sequence.split("").filter((char) => !VALID_BASES.includes(char)))].sort();
-    }
-
-    function nucleotideCounts(sequence) {
-      const counts = {};
-      for (const base of VALID_BASES) {
-        counts[base] = sequence.split(base).length - 1;
+    function countBases(sequence) {
+      const counts = { A: 0, C: 0, G: 0, T: 0 };
+      for (const base of sequence) {
+        if (Object.prototype.hasOwnProperty.call(counts, base)) counts[base]++;
       }
       return counts;
     }
 
-    function gcContent(sequence) {
-      if (!sequence) return 0;
-      const gc = (sequence.match(/G|C/g) || []).length;
-      return (gc / sequence.length) * 100;
+    function findInvalidCharacters(sequence) {
+      return [...new Set([...sequence].filter((base) => !VALID_BASES.includes(base)))].sort();
     }
 
-    function atContent(sequence) {
-      if (!sequence) return 0;
-      const at = (sequence.match(/A|T/g) || []).length;
-      return (at / sequence.length) * 100;
+    function gcContent(counts, validTotal) {
+      return validTotal ? ((counts.G + counts.C) / validTotal) * 100 : 0;
+    }
+
+    function atContent(counts, validTotal) {
+      return validTotal ? ((counts.A + counts.T) / validTotal) * 100 : 0;
     }
 
     function reverseComplement(sequence) {
-      return sequence.split("").reverse().map((base) => COMPLEMENT[base]).join("");
+      return [...sequence].reverse().map((base) => COMPLEMENT[base] || "N").join("");
     }
 
     function transcribe(sequence) {
@@ -479,190 +444,379 @@
 
     function translate(sequence) {
       let protein = "";
-      for (let i = 0; i <= sequence.length - 3; i += 3) {
-        const codon = sequence.slice(i, i + 3);
-        protein += CODON_TABLE[codon] || "";
+      for (let index = 0; index + 3 <= sequence.length; index += 3) {
+        protein += CODON_TABLE[sequence.slice(index, index + 3)] || "X";
       }
       return protein;
     }
 
-    function parseFASTA(rawText) {
-      const records = [];
-      let header = null;
-      let chunks = [];
-
-      for (const line of rawText.split(/\r?\n/)) {
-        const trimmed = line.trim();
-        if (!trimmed) continue;
-
-        if (trimmed.startsWith(">")) {
-          if (header !== null || chunks.length) {
-            records.push({ header: header || "Unnamed sequence", sequence: chunks.join("").replace(/\s+/g, "").toUpperCase() });
-          }
-          header = trimmed.slice(1).trim() || "Unnamed sequence";
-          chunks = [];
-        } else {
-          chunks.push(trimmed.replace(/\s+/g, ""));
-        }
-      }
-
-      if (header !== null || chunks.length) {
-        records.push({ header: header || "Unnamed sequence", sequence: chunks.join("").replace(/\s+/g, "").toUpperCase() });
-      }
-
-      return records;
-    }
-
     function findORFs(sequence, minProteinLength = 30) {
-      const seqLen = sequence.length;
       const orfs = [];
-
-      for (const [strand, strandSeq] of [["+", sequence], ["-", reverseComplement(sequence)]]) {
+      const sequenceLength = sequence.length;
+      for (const [strand, strandSequence] of [["+", sequence], ["-", reverseComplement(sequence)]]) {
         for (let frame = 0; frame < 3; frame++) {
-          let i = frame;
-
-          while (i + 3 <= seqLen) {
-            if (strandSeq.slice(i, i + 3) === "ATG") {
-              let stopIndex = null;
-
-              for (let j = i; j <= seqLen - 3; j += 3) {
-                if (STOP_CODONS.has(strandSeq.slice(j, j + 3))) {
-                  stopIndex = j;
-                  break;
-                }
-              }
-
-              if (stopIndex === null) break;
-
-              const protein = translate(strandSeq.slice(i, stopIndex));
-              if (protein.length >= minProteinLength) {
-                let start, end;
-                if (strand === "+") {
-                  start = i + 1;
-                  end = stopIndex + 3;
-                } else {
-                  start = seqLen - i;
-                  end = seqLen - stopIndex - 2;
-                }
-
-                orfs.push({
-                  Frame: `${strand}${frame + 1}`,
-                  Start: start,
-                  End: end,
-                  "Length (nt)": stopIndex + 3 - i,
-                  "Length (aa)": protein.length,
-                  Protein: protein,
-                });
-              }
-
-              i = stopIndex;
+          let index = frame;
+          while (index + 3 <= sequenceLength) {
+            if (strandSequence.slice(index, index + 3) !== "ATG") {
+              index += 3;
+              continue;
             }
-            i += 3;
+
+            let stopIndex = -1;
+            for (let stop = index; stop + 3 <= sequenceLength; stop += 3) {
+              if (STOP_CODONS.has(strandSequence.slice(stop, stop + 3))) {
+                stopIndex = stop;
+                break;
+              }
+            }
+            if (stopIndex < 0) break;
+
+            const protein = translate(strandSequence.slice(index, stopIndex));
+            if (protein.length >= minProteinLength && !protein.includes("X")) {
+              const start = strand === "+" ? index + 1 : sequenceLength - stopIndex - 2;
+              const end = strand === "+" ? stopIndex + 3 : sequenceLength - index;
+              orfs.push({
+                frame: `${strand}${frame + 1}`,
+                start,
+                end,
+                lengthNt: stopIndex + 3 - index,
+                lengthAa: protein.length,
+                protein,
+              });
+            }
+            index = stopIndex + 3;
           }
         }
       }
-
-      return orfs.sort((a, b) => b["Length (aa)"] - a["Length (aa)"]);
+      return orfs.sort((left, right) => right.lengthAa - left.lengthAa);
     }
 
-    function findRestrictionSites(sequence, enzymes = RESTRICTION_ENZYMES) {
+    function findRestrictionSites(sequence) {
       const sites = {};
-      for (const [enzyme, site] of Object.entries(enzymes)) {
+      for (const [enzyme, recognitionSite] of Object.entries(RESTRICTION_ENZYMES)) {
         const positions = [];
-        let index = sequence.indexOf(site);
+        let index = sequence.indexOf(recognitionSite);
         while (index !== -1) {
           positions.push(index + 1);
-          index = sequence.indexOf(site, index + 1);
+          index = sequence.indexOf(recognitionSite, index + 1);
         }
-        sites[enzyme] = positions;
+        sites[enzyme] = { recognitionSite, positions };
       }
       return sites;
     }
 
-    function renderList(container, items, emptyText = "No results") {
-      if (!items || !items.length) {
-        container.innerHTML = `<li class="empty">${emptyText}</li>`;
-        return;
+    function analyzeRecord(record) {
+      const counts = countBases(record.sequence);
+      const validTotal = Object.values(counts).reduce((sum, count) => sum + count, 0);
+      return {
+        ...record,
+        counts,
+        validTotal,
+        invalidChars: findInvalidCharacters(record.sequence),
+        gc: gcContent(counts, validTotal),
+        at: atContent(counts, validTotal),
+        reverse: reverseComplement(record.sequence),
+        mrna: transcribe(record.sequence),
+        protein: translate(record.sequence),
+        orfs: findORFs(record.sequence),
+        restrictionSites: findRestrictionSites(record.sequence),
+      };
+    }
+
+    function element(id) {
+      return document.getElementById(id);
+    }
+
+    function setStatus(message, tone = "neutral") {
+      const status = element("statusText");
+      status.textContent = message;
+      status.dataset.tone = tone;
+    }
+
+    function setText(id, text) {
+      element(id).textContent = text;
+    }
+
+    function renderRecordTabs() {
+      const tabs = element("recordTabs");
+      tabs.replaceChildren();
+      tabs.hidden = analyses.length < 2;
+      analyses.forEach((record, index) => {
+        const tab = document.createElement("button");
+        tab.type = "button";
+        tab.className = "record-tab";
+        tab.textContent = `${index + 1}. ${record.header}`;
+        tab.setAttribute("aria-selected", String(index === selectedRecordIndex));
+        tab.addEventListener("click", () => {
+          selectedRecordIndex = index;
+          renderSelectedRecord();
+        });
+        tabs.appendChild(tab);
+      });
+    }
+
+    function renderComposition(record) {
+      const bar = element("compositionBar");
+      const legend = element("baseLegend");
+      bar.replaceChildren();
+      legend.replaceChildren();
+      bar.setAttribute("aria-label", `Base composition for ${record.header}`);
+      setText("validBaseTotal", `${record.validTotal} valid ${record.validTotal === 1 ? "base" : "bases"}`);
+
+      for (const base of VALID_BASES) {
+        const count = record.counts[base];
+        const percentage = record.validTotal ? (count / record.validTotal) * 100 : 0;
+        const segment = document.createElement("span");
+        segment.className = `composition-segment base-${base}`;
+        segment.style.width = `${percentage}%`;
+        segment.title = `${base}: ${count} (${percentage.toFixed(2)}%)`;
+        segment.setAttribute("aria-hidden", "true");
+        bar.appendChild(segment);
+
+        const item = document.createElement("div");
+        item.className = "legend-item";
+        const swatch = document.createElement("span");
+        swatch.className = `swatch base-${base}`;
+        swatch.setAttribute("aria-hidden", "true");
+        const copy = document.createElement("div");
+        copy.className = "legend-copy";
+        const title = document.createElement("span");
+        title.className = "legend-title";
+        title.append(document.createTextNode(base));
+        const percentageText = document.createElement("small");
+        percentageText.textContent = `${percentage.toFixed(1)}%`;
+        title.appendChild(percentageText);
+        const value = document.createElement("span");
+        value.className = "legend-value";
+        value.textContent = `${count} ${count === 1 ? "base" : "bases"}`;
+        copy.append(title, value);
+        item.append(swatch, copy);
+        legend.appendChild(item);
+      }
+    }
+
+    function renderQuality(record) {
+      const list = element("sequenceQuality");
+      list.replaceChildren();
+      const items = [];
+      if (!record.validTotal) {
+        items.push({ text: "No valid A, C, G or T bases were found.", tone: "error" });
+      } else {
+        items.push({ text: `Recognized ${record.validTotal} of ${record.sequence.length} sequence symbols as valid DNA bases.`, tone: "success" });
+      }
+      if (record.invalidChars.length) {
+        const symbols = record.invalidChars.map((char) => char === " " ? "space" : char).join(", ");
+        items.push({ text: `Ambiguous or invalid symbols: ${symbols}. They are excluded from composition percentages.`, tone: "warning" });
+      } else {
+        items.push({ text: "All sequence symbols are valid DNA bases (A, C, G, T).", tone: "success" });
+      }
+      items.push({ text: `GC ${record.gc.toFixed(2)}% + AT ${record.at.toFixed(2)}% = ${(record.gc + record.at).toFixed(2)}% of valid bases.`, tone: "success" });
+      for (const item of items) {
+        const li = document.createElement("li");
+        li.className = `quality-item ${item.tone === "warning" ? "warning" : item.tone === "error" ? "error" : ""}`;
+        li.textContent = item.text;
+        list.appendChild(li);
+      }
+    }
+
+    function renderRestrictionSites(record) {
+      const list = element("restrictionResults");
+      const siteMap = element("siteMap");
+      siteMap.querySelectorAll(".site-marker").forEach((marker) => marker.remove());
+      list.replaceChildren();
+      const matches = Object.entries(record.restrictionSites)
+        .flatMap(([enzyme, details]) => details.positions.map((position) => ({ enzyme, recognitionSite: details.recognitionSite, position })));
+      setText("restrictionSummary", `${matches.length} ${matches.length === 1 ? "match" : "matches"}`);
+      setText("siteMapStart", record.sequence.length ? "1" : "0");
+      setText("siteMapEnd", String(record.sequence.length));
+
+      if (record.sequence.length) {
+        for (const match of matches) {
+          const marker = document.createElement("span");
+          marker.className = "site-marker";
+          marker.style.left = `${((match.position - 1) / Math.max(1, record.sequence.length - 1)) * 100}%`;
+          marker.title = `${match.enzyme} (${match.recognitionSite}) at position ${match.position}`;
+          marker.setAttribute("aria-label", marker.title);
+          siteMap.appendChild(marker);
+        }
       }
 
-      container.innerHTML = items
-        .map((item) => `<li>${item}</li>`)
-        .join("");
+      if (!matches.length) {
+        const empty = document.createElement("li");
+        empty.className = "empty-state";
+        empty.textContent = "No known restriction sites were found in this sequence.";
+        list.appendChild(empty);
+        return;
+      }
+      for (const [enzyme, details] of Object.entries(record.restrictionSites)) {
+        if (!details.positions.length) continue;
+        const item = document.createElement("li");
+        const name = document.createElement("strong");
+        name.textContent = `${enzyme} · ${details.recognitionSite}`;
+        item.append(name, document.createTextNode(` — ${details.positions.length} ${details.positions.length === 1 ? "site" : "sites"} at ${details.positions.join(", ")}`));
+        list.appendChild(item);
+      }
     }
 
-    function buildBaseChart(counts) {
-      const total = Object.values(counts).reduce((sum, value) => sum + value, 0) || 1;
-      const baseColors = {
-        A: "#38bdf8",
-        C: "#34d399",
-        G: "#fbbf24",
-        T: "#f87171",
-      };
-
-      const bars = Object.entries(counts)
-        .map(([base, count]) => {
-          const height = (count / total) * 100;
-          return `
-            <div class="chart-bar">
-              <div class="chart-visual">
-                <div class="chart-fill" style="height: ${height}%; background: ${baseColors[base] || '#94a3b8'};"></div>
-              </div>
-              <strong>${base}</strong><br>
-              <span>${count}</span>
-            </div>
-          `;
-        })
-        .join("");
-
-      document.getElementById("baseChart").innerHTML = bars;
+    function renderORFs(record) {
+      const list = element("orfResults");
+      list.replaceChildren();
+      setText("orfSummary", `${record.orfs.length} detected`);
+      if (!record.orfs.length) {
+        const empty = document.createElement("li");
+        empty.className = "empty-state";
+        empty.textContent = "No open reading frames of at least 30 amino acids were found.";
+        list.appendChild(empty);
+        return;
+      }
+      record.orfs.slice(0, 10).forEach((orf, index) => {
+        const item = document.createElement("li");
+        item.className = `orf-card${index === 0 ? " featured" : ""}`;
+        const rank = document.createElement("span");
+        rank.className = "orf-rank";
+        rank.textContent = index === 0 ? "★" : String(index + 1);
+        rank.setAttribute("aria-label", index === 0 ? "Longest ORF" : `ORF ${index + 1}`);
+        const title = document.createElement("span");
+        title.className = "orf-title";
+        title.textContent = `${index === 0 ? "Longest · " : ""}Frame ${orf.frame} · ${orf.lengthAa} aa`;
+        const meta = document.createElement("span");
+        meta.className = "orf-meta";
+        meta.textContent = `Positions ${orf.start}–${orf.end} · ${orf.lengthNt} nt`;
+        item.append(rank, title, meta);
+        list.appendChild(item);
+      });
+      if (record.orfs.length > 10) {
+        const more = document.createElement("li");
+        more.className = "empty-state";
+        more.textContent = `${record.orfs.length - 10} more ORFs are included in the exported report.`;
+        list.appendChild(more);
+      }
     }
 
-    function buildReport(cleaned, counts, gc, at, revComp, mrna, protein, orfs, restrictionSites, invalidChars) {
-      const restrictionEntries = Object.entries(restrictionSites)
-        .filter(([, positions]) => positions.length)
-        .map(([enzyme, positions]) => `${enzyme}: ${positions.join(", ")}`);
+    function renderSummary(record) {
+      const summary = element("summaryLine");
+      const summaryText = element("summaryText");
+      const issues = [];
+      if (record.invalidChars.length) issues.push(`${record.invalidChars.length} invalid symbol type${record.invalidChars.length === 1 ? "" : "s"}`);
+      if (!record.orfs.length) issues.push("no ORF ≥ 30 aa");
+      summary.dataset.tone = record.invalidChars.length && !record.validTotal ? "error" : record.invalidChars.length || !record.orfs.length ? "warning" : "success";
+      summaryText.textContent = `${record.header}: ${record.orfs.length} ORF${record.orfs.length === 1 ? "" : "s"} detected · GC ${record.gc.toFixed(2)}%${issues.length ? ` · ${issues.join(" · ")}` : " · sequence looks valid"}`;
+    }
 
-      return [
-        "BioSeq Analyzer Report",
-        "======================",
-        `Length: ${cleaned.length} bp`,
-        `GC content: ${gc.toFixed(2)}%`,
-        `AT content: ${at.toFixed(2)}%`,
-        invalidChars.length ? `Invalid characters: ${invalidChars.join(", ")}` : "Invalid characters: none",
-        "",
-        "Base counts:",
-        ...Object.entries(counts).map(([base, count]) => `${base}: ${count}`),
-        "",
-        `Reverse complement: ${revComp}`,
-        `mRNA transcript: ${mrna}`,
-        `Protein translation: ${protein}`,
-        "",
-        `Open reading frames (${orfs.length}):`,
-        ...orfs.slice(0, 10).map((orf) => `Frame ${orf.Frame} | Start ${orf.Start} | End ${orf.End} | Length ${orf["Length (aa)"]} aa | ${orf.Protein}`),
-        "",
-        "Restriction sites:",
-        ...(restrictionEntries.length ? restrictionEntries : ["None"]),
-      ].join("\n");
+    function renderSelectedRecord() {
+      if (!analyses.length) return;
+      const record = analyses[selectedRecordIndex];
+      renderRecordTabs();
+      setText("recordCaption", analyses.length > 1 ? `Record ${selectedRecordIndex + 1} of ${analyses.length} · ${record.header}` : "Overview of the selected sequence");
+      setText("lengthValue", `${record.sequence.length} bp`);
+      setText("gcValue", `${record.gc.toFixed(2)}%`);
+      setText("atValue", `${record.at.toFixed(2)}%`);
+      setText("orfValue", String(record.orfs.length));
+      setText("cleanedOutput", record.sequence);
+      setText("revCompOutput", record.reverse);
+      setText("mrnaOutput", record.mrna);
+      setText("proteinOutput", record.protein);
+      renderSummary(record);
+      renderComposition(record);
+      renderQuality(record);
+      renderRestrictionSites(record);
+      renderORFs(record);
+    }
+
+    function clearResults() {
+      selectedRecordIndex = 0;
+      element("recordTabs").replaceChildren();
+      element("recordTabs").hidden = true;
+      setText("recordCaption", "Overview of the selected sequence");
+      setText("lengthValue", "0 bp");
+      setText("gcValue", "0.00%");
+      setText("atValue", "0.00%");
+      setText("orfValue", "0");
+      setText("validBaseTotal", "0 valid bases");
+      setText("restrictionSummary", "0 matches");
+      setText("orfSummary", "0 detected");
+      setText("cleanedOutput", "");
+      setText("revCompOutput", "");
+      setText("mrnaOutput", "");
+      setText("proteinOutput", "");
+      element("compositionBar").replaceChildren();
+      element("baseLegend").replaceChildren();
+      element("sequenceQuality").replaceChildren();
+      element("restrictionResults").replaceChildren();
+      element("orfResults").replaceChildren();
+      element("siteMap").querySelectorAll(".site-marker").forEach((marker) => marker.remove());
+      setText("siteMapStart", "0");
+      setText("siteMapEnd", "0");
+      element("summaryLine").dataset.tone = "error";
+      setText("summaryText", "No sequence was found to analyze.");
+    }
+
+    function analyzeSequence() {
+      const records = parseRecords(element("sequenceInput").value);
+      if (!records.length) {
+        analyses = [];
+        clearResults();
+        setStatus("Enter a DNA sequence or at least one non-empty FASTA record.", "error");
+        return;
+      }
+      analyses = records.map(analyzeRecord);
+      selectedRecordIndex = 0;
+      renderSelectedRecord();
+      setStatus(`Analysis complete for ${analyses.length} ${analyses.length === 1 ? "sequence" : "FASTA records"}.`, "success");
+    }
+
+    function formatWrapped(sequence, width = 60) {
+      const lines = [];
+      for (let index = 0; index < sequence.length; index += width) lines.push(sequence.slice(index, index + width));
+      return lines.join("\n");
+    }
+
+    function buildReport(records) {
+      const sections = records.map((record, index) => {
+        const restrictionEntries = Object.entries(record.restrictionSites)
+          .filter(([, details]) => details.positions.length)
+          .map(([enzyme, details]) => `${enzyme} (${details.recognitionSite}): ${details.positions.join(", ")}`);
+        return [
+          `Record ${index + 1}: ${record.header}`,
+          "=".repeat(Math.min(60, `Record ${index + 1}: ${record.header}`.length)),
+          `Length: ${record.sequence.length} bp`,
+          `Valid bases: ${record.validTotal}`,
+          `GC content: ${record.gc.toFixed(2)}%`,
+          `AT content: ${record.at.toFixed(2)}%`,
+          `Invalid characters: ${record.invalidChars.length ? record.invalidChars.join(", ") : "none"}`,
+          "",
+          "Base counts:",
+          ...Object.entries(record.counts).map(([base, count]) => `${base}: ${count}`),
+          "",
+          `Open reading frames (${record.orfs.length}; first 10):`,
+          ...(record.orfs.slice(0, 10).map((orf) => `Frame ${orf.frame} | Positions ${orf.start}-${orf.end} | ${orf.lengthAa} aa | ${orf.protein}`)),
+          "",
+          "Restriction sites:",
+          ...(restrictionEntries.length ? restrictionEntries : ["None"]),
+          "",
+          "Cleaned sequence:",
+          formatWrapped(record.sequence),
+          "",
+          "Reverse complement:",
+          formatWrapped(record.reverse),
+          "",
+          "mRNA transcript:",
+          formatWrapped(record.mrna),
+          "",
+          "Protein translation:",
+          formatWrapped(record.protein),
+        ].join("\n");
+      });
+      return `BioSeq Analyzer Report\n${"=".repeat(22)}\n\n${sections.join("\n\n")}\n`;
     }
 
     function exportReport() {
-      const rawText = document.getElementById("sequenceInput").value;
-      const cleaned = cleanSequence(rawText);
-      if (!cleaned) {
-        setStatus("Nothing to export yet.", "error");
+      const records = parseRecords(element("sequenceInput").value);
+      if (!records.length) {
+        setStatus("Nothing to export: no sequence was found.", "error");
         return;
       }
-
-      const invalidChars = findInvalidCharacters(cleaned);
-      const counts = nucleotideCounts(cleaned);
-      const gc = gcContent(cleaned);
-      const at = atContent(cleaned);
-      const revComp = reverseComplement(cleaned);
-      const mrna = transcribe(cleaned);
-      const protein = translate(cleaned);
-      const orfs = findORFs(cleaned, 30);
-      const restrictionSites = findRestrictionSites(cleaned);
-      const report = buildReport(cleaned, counts, gc, at, revComp, mrna, protein, orfs, restrictionSites, invalidChars);
+      const report = buildReport(records.map(analyzeRecord));
       const blob = new Blob([report], { type: "text/plain;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -670,104 +824,53 @@
       link.download = "bioseq-report.txt";
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      setStatus("Report exported as a text file.", "success");
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setStatus(`Report exported with ${records.length} ${records.length === 1 ? "sequence" : "records"}.`, "success");
     }
 
     function handleFileUpload(event) {
       const file = event.target.files && event.target.files[0];
       if (!file) return;
-
       const reader = new FileReader();
-      reader.onload = (e) => {
-        const content = e.target.result || "";
-        document.getElementById("sequenceInput").value = content;
+      reader.onload = () => {
+        if (typeof reader.result !== "string") {
+          setStatus("The selected file could not be read as text.", "error");
+          return;
+        }
+        element("sequenceInput").value = reader.result;
         analyzeSequence();
-        setStatus(`Loaded file: ${file.name}`, "success");
+        if (analyses.length) setStatus(`Loaded ${file.name} · ${analyses.length} ${analyses.length === 1 ? "sequence" : "FASTA records"} analyzed.`, "success");
       };
+      reader.onerror = () => setStatus(`Could not read ${file.name}. Please try another file.`, "error");
       reader.readAsText(file);
     }
 
-    function setStatus(message, tone = "neutral") {
-      const statusText = document.getElementById("statusText");
-      statusText.textContent = message;
-      statusText.style.color = tone === "error" ? "#fca5a5" : tone === "success" ? "#86efac" : "#cbd5e1";
-    }
-
-    function analyzeSequence() {
-      const rawText = document.getElementById("sequenceInput").value;
-      const cleaned = cleanSequence(rawText);
-
-      if (!cleaned) {
-        setStatus("Please enter a DNA sequence or FASTA text.", "error");
-        return;
-      }
-
-      const invalidChars = findInvalidCharacters(cleaned);
-      const counts = nucleotideCounts(cleaned);
-      const gc = gcContent(cleaned);
-      const at = atContent(cleaned);
-      const revComp = reverseComplement(cleaned);
-      const mrna = transcribe(cleaned);
-      const protein = translate(cleaned);
-      const orfs = findORFs(cleaned, 30);
-      const restrictionSites = findRestrictionSites(cleaned);
-
-      document.getElementById("lengthValue").textContent = `${cleaned.length} bp`;
-      document.getElementById("gcValue").textContent = `${gc.toFixed(2)}%`;
-      document.getElementById("atValue").textContent = `${at.toFixed(2)}%`;
-      document.getElementById("orfValue").textContent = orfs.length;
-
-      const countItems = Object.entries(counts)
-        .map(([base, count]) => `<div class="count-item"><span>${base}</span><strong>${count}</strong></div>`)
-        .join("");
-      document.getElementById("countsGrid").innerHTML = countItems;
-      buildBaseChart(counts);
-
-      const quality = [];
-      if (invalidChars.length) {
-        quality.push(`Invalid characters found: ${invalidChars.join(", ")}`);
-      } else {
-        quality.push("Only valid DNA bases were found (A, C, G, T). ");
-      }
-      quality.push(`GC content: ${gc.toFixed(2)}%`);
-      quality.push(`AT content: ${at.toFixed(2)}%`);
-      renderList(document.getElementById("sequenceQuality"), quality.map((item) => item), "No sequence quality issues detected.");
-
-      document.getElementById("cleanedOutput").textContent = cleaned || "No sequence";
-      document.getElementById("revCompOutput").textContent = revComp || "No sequence";
-      document.getElementById("mrnaOutput").textContent = mrna || "No sequence";
-      document.getElementById("proteinOutput").textContent = protein || "No protein translation";
-
-      const orfItems = orfs.length
-        ? orfs.slice(0, 10).map((orf) => `Frame ${orf.Frame} | Start ${orf.Start} | End ${orf.End} | Length ${orf["Length (aa)"]} aa | ${orf.Protein}`)
-        : ["No open reading frames longer than 30 amino acids were found."];
-      renderList(document.getElementById("orfResults"), orfItems, "No ORFs found.");
-
-      const restrictionItems = Object.entries(restrictionSites)
-        .filter(([, positions]) => positions.length)
-        .map(([enzyme, positions]) => `${enzyme}: ${positions.join(", ")}`);
-      renderList(document.getElementById("restrictionResults"), restrictionItems.length ? restrictionItems : ["No known restriction sites were found."], "No matches found.");
-
-      const fastaRecords = parseFASTA(rawText);
-      if (fastaRecords.length > 1) {
-        setStatus(`Analyzed ${fastaRecords.length} FASTA records successfully.`, "success");
-      } else {
-        setStatus("Sequence analysis complete.", "success");
+    async function copyOutput(button) {
+      const text = element(button.dataset.copy).textContent;
+      try {
+        await navigator.clipboard.writeText(text);
+        const originalText = button.textContent;
+        button.textContent = "Copied";
+        window.setTimeout(() => { button.textContent = originalText; }, 1400);
+      } catch (error) {
+        setStatus("Clipboard access was blocked. Select and copy the sequence manually.", "error");
       }
     }
 
     function loadExample() {
-      document.getElementById("sequenceInput").value = "ATGGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGATAG";
+      element("sequenceInput").value = "ATGGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGATAG";
       analyzeSequence();
     }
 
-    document.getElementById("analyzeBtn").addEventListener("click", analyzeSequence);
-    document.getElementById("exampleBtn").addEventListener("click", loadExample);
-    document.getElementById("exportBtn").addEventListener("click", exportReport);
-    document.getElementById("fileInput").addEventListener("change", handleFileUpload);
-    window.addEventListener("DOMContentLoaded", analyzeSequence);
+    element("analyzeBtn").addEventListener("click", analyzeSequence);
+    element("exampleBtn").addEventListener("click", loadExample);
+    element("exportBtn").addEventListener("click", exportReport);
+    element("fileInput").addEventListener("change", handleFileUpload);
+    document.querySelectorAll("[data-copy]").forEach((button) => {
+      button.addEventListener("click", () => copyOutput(button));
+    });
+    analyzeSequence();
   </script>
 </body>
 </html>
