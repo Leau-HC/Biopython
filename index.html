@@ -93,6 +93,8 @@
     .button-secondary:hover { background: #eaf3ed; }
     .upload-control { margin-top: 18px; }
     .upload-control input { display: block; width: 100%; color: var(--muted); font-size: .8rem; }
+    #ncbiAccession { min-width: 0; flex: 1 1 180px; padding: 9px 11px; border: 1px solid #cfddd5; border-radius: 10px; color: var(--ink); background: #fbfdfb; font-size: .82rem; }
+    [role="radiogroup"] input { accent-color: var(--green); }
     input[type="file"]::file-selector-button {
       margin-right: 10px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 8px;
       background: #f5f9f6; color: #36564b; font-weight: 700; cursor: pointer;
@@ -138,7 +140,7 @@
     .composition-segment.base-A, .swatch.base-A { background: var(--a); }
     .composition-segment.base-C, .swatch.base-C { background: var(--c); }
     .composition-segment.base-G, .swatch.base-G { background: var(--g); }
-    .composition-segment.base-T, .swatch.base-T { background: var(--t); }
+    .composition-segment.base-T, .swatch.base-T, .composition-segment.base-U, .swatch.base-U { background: var(--t); }
     .legend { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; margin-top: 15px; }
     .legend-item { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 10px 9px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface-soft); }
     .swatch { flex: 0 0 auto; width: 10px; height: 10px; border-radius: 3px; }
@@ -175,6 +177,7 @@
     .derived-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
     .derived-note { color: var(--muted); font-size: .73rem; }
     .copy-button { padding: 5px 9px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: #456157; font-size: .72rem; font-weight: 750; }
+    .text-link { color: var(--green-dark); font-weight: 750; }
     .sequence-output { max-height: 210px; margin: 0; padding: 11px; overflow: auto; border-radius: 9px; background: #f0f5f2; color: #25483b; font: .76rem/1.7 "SFMono-Regular", Consolas, "Liberation Mono", monospace; overflow-wrap: anywhere; white-space: pre-wrap; }
     .footer-note { margin: 22px 2px 0; color: #82918b; font-size: .74rem; line-height: 1.5; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
@@ -222,10 +225,15 @@
     <section class="panel input-panel" aria-label="Sequence input">
       <div class="input-grid">
         <div>
-          <label class="section-label" for="sequenceInput">DNA sequence or FASTA</label>
-          <p class="input-hint">Paste a sequence or FASTA records. Each FASTA record is analyzed separately.</p>
+          <span class="section-label">Molecule type</span>
+          <div class="actions molecule-choice" role="radiogroup" aria-label="Molecule type">
+            <label class="button button-secondary"><input type="radio" name="moleculeType" value="DNA" checked /> DNA</label>
+            <label class="button button-secondary"><input type="radio" name="moleculeType" value="RNA" /> RNA</label>
+          </div>
+          <label class="section-label" for="sequenceInput" id="sequenceLabel" style="margin-top: 16px;">DNA sequence or FASTA</label>
+          <p class="input-hint" id="sequenceHint">Paste a sequence or FASTA records. Each FASTA record is analyzed separately.</p>
           <textarea id="sequenceInput" spellcheck="false" aria-describedby="sequenceHint">ATGGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGATAG</textarea>
-          <span id="sequenceHint" class="sr-only">Whitespace is ignored. FASTA headers beginning with greater-than are supported.</span>
+          <span class="sr-only">Whitespace is ignored. FASTA headers beginning with greater-than are supported.</span>
         </div>
         <div>
           <span class="section-label">Workspace</span>
@@ -237,6 +245,14 @@
           <div class="upload-control">
             <label class="section-label" for="fileInput">Or choose a sequence file</label>
             <input id="fileInput" type="file" accept=".txt,.fa,.fasta,.seq,.dna" />
+          </div>
+          <div class="upload-control">
+            <label class="section-label" for="ncbiAccession">Import a sequence from NCBI Nucleotide</label>
+            <div class="actions">
+              <input id="ncbiAccession" type="text" placeholder="Accession, e.g. NM_000546" autocomplete="off" />
+              <button class="button button-secondary" id="ncbiImportBtn" type="button">Import FASTA</button>
+            </div>
+            <p class="input-hint">Imports nucleotide records by accession. Requires an internet connection.</p>
           </div>
           <p class="status" id="statusText" role="status" aria-live="polite">Ready to analyze.</p>
         </div>
@@ -308,6 +324,27 @@
           <ul class="result-list" id="restrictionResults"></ul>
         </article>
 
+        <article class="card card-wide" id="proteinCard">
+          <div class="card-heading">
+            <div><h3>Protein properties</h3><p>Sequence-derived estimates; not experimental measurements or a 3D structure prediction</p></div>
+          </div>
+          <ul class="quality-list" id="proteinProperties"></ul>
+          <p class="input-hint" id="foldNotice">A reliable fold or secondary-structure prediction requires a dedicated structure-prediction method; it is not inferred by this page.</p>
+          <div class="actions">
+            <button class="copy-button" type="button" data-copy="proteinOutput">Copy protein sequence</button>
+            <a class="button button-secondary text-link" href="https://colabfold.mmseqs.com/" target="_blank" rel="noopener noreferrer">Open ColabFold prediction</a>
+          </div>
+        </article>
+
+        <article class="card card-wide" id="ncbiAnnotationCard">
+          <div class="card-heading">
+            <div><h3>NCBI record &amp; protein annotations</h3><p>Curated information appears only when linked records and annotations exist in NCBI</p></div>
+          </div>
+          <ul class="quality-list" id="ncbiAnnotations">
+            <li class="quality-item">Import a nucleotide accession to look for linked CDS and protein records.</li>
+          </ul>
+        </article>
+
         <article class="card card-wide">
           <div class="card-heading">
             <div><h3>Open reading frames</h3><p>Longest predicted ORFs are shown first · minimum 30 amino acids</p></div>
@@ -355,9 +392,10 @@
   </main>
 
   <script>
-    const VALID_BASES = "ACGT";
-    const COMPLEMENT = { A: "T", T: "A", G: "C", C: "G" };
-    const BASE_COLORS = { A: "#138a70", C: "#4779d0", G: "#d69325", T: "#d75d5d" };
+    const DNA_BASES = "ACGT";
+    const RNA_BASES = "ACGU";
+    const DNA_COMPLEMENT = { A: "T", T: "A", G: "C", C: "G" };
+    const RNA_COMPLEMENT = { A: "U", U: "A", G: "C", C: "G" };
     const BASES = "TCAG";
     const CODONS = [];
     for (const first of BASES) {
@@ -377,6 +415,8 @@
     };
     let analyses = [];
     let selectedRecordIndex = 0;
+    let moleculeType = "DNA";
+    let importRequestId = 0;
 
     function cleanSequence(rawText) {
       return rawText.replace(/\s+/g, "").toUpperCase();
@@ -414,38 +454,44 @@
       return records;
     }
 
-    function countBases(sequence) {
-      const counts = { A: 0, C: 0, G: 0, T: 0 };
+    function countBases(sequence, bases = DNA_BASES) {
+      const counts = Object.fromEntries([...bases].map((base) => [base, 0]));
       for (const base of sequence) {
         if (Object.prototype.hasOwnProperty.call(counts, base)) counts[base]++;
       }
       return counts;
     }
 
-    function findInvalidCharacters(sequence) {
-      return [...new Set([...sequence].filter((base) => !VALID_BASES.includes(base)))].sort();
+    function findInvalidCharacters(sequence, bases = DNA_BASES) {
+      return [...new Set([...sequence].filter((base) => !bases.includes(base)))].sort();
     }
 
     function gcContent(counts, validTotal) {
       return validTotal ? ((counts.G + counts.C) / validTotal) * 100 : 0;
     }
 
-    function atContent(counts, validTotal) {
-      return validTotal ? ((counts.A + counts.T) / validTotal) * 100 : 0;
+    function atContent(counts, validTotal, type = "DNA") {
+      return validTotal ? ((counts.A + counts[type === "RNA" ? "U" : "T"]) / validTotal) * 100 : 0;
     }
 
-    function reverseComplement(sequence) {
-      return [...sequence].reverse().map((base) => COMPLEMENT[base] || "N").join("");
+    function reverseComplement(sequence, type = "DNA") {
+      const complement = type === "RNA" ? RNA_COMPLEMENT : DNA_COMPLEMENT;
+      return [...sequence].reverse().map((base) => complement[base] || "N").join("");
     }
 
-    function transcribe(sequence) {
-      return sequence.replace(/T/g, "U");
+    function toDna(sequence, type = "DNA") {
+      return type === "RNA" ? sequence.replace(/U/g, "T") : sequence;
     }
 
-    function translate(sequence) {
+    function transcribe(sequence, type = "DNA") {
+      return type === "RNA" ? sequence.replace(/U/g, "T") : sequence.replace(/T/g, "U");
+    }
+
+    function translate(sequence, type = "DNA") {
+      const codingSequence = toDna(sequence, type);
       let protein = "";
-      for (let index = 0; index + 3 <= sequence.length; index += 3) {
-        protein += CODON_TABLE[sequence.slice(index, index + 3)] || "X";
+      for (let index = 0; index + 3 <= codingSequence.length; index += 3) {
+        protein += CODON_TABLE[codingSequence.slice(index, index + 3)] || "X";
       }
       return protein;
     }
@@ -505,21 +551,349 @@
       return sites;
     }
 
-    function analyzeRecord(record) {
-      const counts = countBases(record.sequence);
+    const HYDROPATHY = {
+      A: 1.8, R: -4.5, N: -3.5, D: -3.5, C: 2.5, Q: -3.5, E: -3.5,
+      G: -0.4, H: -3.2, I: 4.5, L: 3.8, K: -3.9, M: 1.9, F: 2.8,
+      P: -1.6, S: -0.8, T: -0.7, W: -0.9, Y: -1.3, V: 4.2,
+    };
+    const RESIDUE_MASS = {
+      A: 71.0788, R: 156.1875, N: 114.1038, D: 115.0886, C: 103.1388,
+      Q: 128.1307, E: 129.1155, G: 57.0519, H: 137.1411, I: 113.1594,
+      L: 113.1594, K: 128.1741, M: 131.1926, F: 147.1766, P: 97.1167,
+      S: 87.0782, T: 101.1051, W: 186.2132, Y: 163.1760, V: 99.1326,
+    };
+    const CHARGE_PKA = { D: 3.9, E: 4.1, C: 8.3, Y: 10.1, H: 6.0, K: 10.5, R: 12.5 };
+
+    function netChargeAtPH(sequence, ph) {
+      const counts = countBases(sequence, "ARNDCEQGHILKMFPSTWYV");
+      const positive = (1 / (1 + 10 ** (ph - 8.0))) +
+        (counts.K / (1 + 10 ** (ph - CHARGE_PKA.K))) +
+        (counts.R / (1 + 10 ** (ph - CHARGE_PKA.R))) +
+        (counts.H / (1 + 10 ** (ph - CHARGE_PKA.H)));
+      const negative = (1 / (1 + 10 ** (3.1 - ph))) +
+        (counts.D / (1 + 10 ** (CHARGE_PKA.D - ph))) +
+        (counts.E / (1 + 10 ** (CHARGE_PKA.E - ph))) +
+        (counts.C / (1 + 10 ** (CHARGE_PKA.C - ph))) +
+        (counts.Y / (1 + 10 ** (CHARGE_PKA.Y - ph)));
+      return positive - negative;
+    }
+
+    function proteinProperties(protein) {
+      const residues = [...protein].filter((residue) => Object.prototype.hasOwnProperty.call(RESIDUE_MASS, residue));
+      if (!residues.length) return null;
+      const counts = countBases(protein, "ARNDCEQGHILKMFPSTWYV");
+      const hydropathy = residues.reduce((sum, residue) => sum + HYDROPATHY[residue], 0) / residues.length;
+      const hydrophobic = residues.filter((residue) => HYDROPATHY[residue] >= 1.6).length;
+      const hydrophilic = residues.filter((residue) => HYDROPATHY[residue] <= -0.5).length;
+      const cysteines = counts.C || 0;
+      const mass = residues.reduce((sum, residue) => sum + RESIDUE_MASS[residue], 0) + 18.01528;
+      let low = 0;
+      let high = 14;
+      for (let step = 0; step < 60; step++) {
+        const midpoint = (low + high) / 2;
+        if (netChargeAtPH(protein, midpoint) > 0) low = midpoint;
+        else high = midpoint;
+      }
+      return {
+        length: residues.length,
+        mass,
+        netCharge: netChargeAtPH(protein, 7),
+        pI: (low + high) / 2,
+        hydropathy,
+        hydrophobicPercent: (hydrophobic / residues.length) * 100,
+        hydrophilicPercent: (hydrophilic / residues.length) * 100,
+        cysteines,
+      };
+    }
+
+    function parseGenBankRecord(text) {
+      const definition = (text.match(/^DEFINITION\s+(.+)$/m) || [])[1] || "";
+      const accession = (text.match(/^ACCESSION\s+(\S+)/m) || [])[1] || "";
+      const featuresStart = text.indexOf("FEATURES");
+      const originStart = text.indexOf("ORIGIN");
+      const featuresText = featuresStart >= 0 && originStart > featuresStart
+        ? text.slice(featuresStart, originStart)
+        : "";
+      const featureBlocks = featuresText.split(/\n     (?=[A-Za-z_]+\s)/).slice(1);
+      const features = featureBlocks.map((block) => {
+        const lines = block.split(/\r?\n/);
+        const first = lines[0].match(/^([A-Za-z_]+)\s+(.+)$/);
+        if (!first) return null;
+        const qualifiers = {};
+        let currentKey = null;
+        let currentValue = "";
+        const saveQualifier = () => {
+          if (currentKey) qualifiers[currentKey] = currentValue.replace(/""/g, '"').replace(/\s+/g, " ").trim();
+        };
+        for (const line of lines.slice(1)) {
+          const qualifierMatch = line.match(/^\s+\/([^=]+)=(.*)$/);
+          if (qualifierMatch) {
+            saveQualifier();
+            currentKey = qualifierMatch[1];
+            currentValue = qualifierMatch[2].replace(/^"/, "");
+            if (currentValue.endsWith('"')) currentValue = currentValue.slice(0, -1);
+          } else if (currentKey && line.trim() && !line.trim().startsWith("/")) {
+            currentValue += ` ${line.trim().replace(/"$/, "")}`;
+          }
+        }
+        saveQualifier();
+        return { key: first[1], location: first[2].trim(), qualifiers };
+      }).filter(Boolean);
+      return { definition, accession, features };
+    }
+
+    async function ncbiFetch(database, accession, returnType) {
+      const params = new URLSearchParams({
+        db: database,
+        id: accession,
+        rettype: returnType,
+        retmode: "text",
+      });
+      const response = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?${params.toString()}`, {
+        headers: { Accept: "text/plain" },
+      });
+      if (!response.ok) throw new Error(`NCBI request failed (HTTP ${response.status}).`);
+      const body = await response.text();
+      if (!body.trim() || /<ErrorList>|<ERROR>/i.test(body)) throw new Error("NCBI did not return a sequence for that accession.");
+      return body;
+    }
+
+    function renderNcbiInfo(info, record = null) {
+      const list = element("ncbiAnnotations");
+      list.replaceChildren();
+      const addItem = (text, link) => {
+        const item = document.createElement("li");
+        item.className = "quality-item";
+        if (link) {
+          const anchor = document.createElement("a");
+          anchor.className = "text-link";
+          anchor.href = link;
+          anchor.target = "_blank";
+          anchor.rel = "noopener noreferrer";
+          anchor.textContent = text;
+          item.appendChild(anchor);
+        } else {
+          item.textContent = text;
+        }
+        list.appendChild(item);
+      };
+
+      if (!info) {
+        if (record && record.type === "RNA") {
+          addItem("No NCBI accession is linked. A T-for-U DNA equivalent can be derived, but this does not identify its genomic source.");
+          const blastUrl = new URL("https://blast.ncbi.nlm.nih.gov/Blast.cgi");
+          blastUrl.searchParams.set("CMD", "Put");
+          blastUrl.searchParams.set("PROGRAM", "blastn");
+          blastUrl.searchParams.set("DATABASE", "nt");
+          if (record.dnaSequence.length <= 1200) blastUrl.searchParams.set("QUERY", record.dnaSequence);
+          addItem(record.dnaSequence.length <= 1200
+            ? "Search the derived DNA equivalent against NCBI with BLASTN (opens NCBI; results are not imported automatically)."
+            : "Open NCBI BLASTN and paste the derived DNA equivalent from the sequence panel (results are not imported automatically).", blastUrl.href);
+        } else {
+          addItem("No NCBI record has been linked to this sequence. Import an accession to retrieve available annotations.");
+        }
+        return;
+      }
+      addItem(`Nucleotide record: ${info.definition || info.accession || "record found"}.`);
+      if (info.accession) {
+        addItem(`Accession ${info.accession} · View the record at NCBI.`, `https://www.ncbi.nlm.nih.gov/nuccore/${encodeURIComponent(info.accession)}`);
+      }
+      if (info.annotationError) {
+        addItem(`The nucleotide record was imported, but its annotations could not be retrieved: ${info.annotationError}`);
+        return;
+      }
+      if (!info.cds) {
+        addItem("No annotated coding sequence (CDS) was found in this NCBI nucleotide record.");
+        return;
+      }
+      addItem(`CDS annotation: ${info.cds.product || "unnamed product"}${info.cds.proteinId ? ` · protein ${info.cds.proteinId}` : ""}.`);
+      if (info.proteinRecord) {
+        addItem(`Protein record found: ${info.proteinRecord.definition || info.cds.proteinId}.`,
+          `https://www.ncbi.nlm.nih.gov/protein/${encodeURIComponent(info.cds.proteinId)}`);
+        if (info.proteinRecord.features.length) {
+          const relevantFeatures = info.proteinRecord.features.filter((feature) =>
+            ["REGION", "SITE", "BOND", "MOTIF", "NP_BIND", "DOMAIN", "ACT_SITE"].includes(feature.key.toUpperCase()));
+          for (const feature of relevantFeatures.slice(0, 12)) {
+            const qualifier = feature.qualifiers.note || feature.qualifiers.region_name || feature.qualifiers.site_type ||
+              feature.qualifiers.product || feature.qualifiers.inference || "";
+            addItem(`${feature.key} (${feature.location})${qualifier ? `: ${qualifier}` : ""}`);
+          }
+          if (!relevantFeatures.length) {
+            addItem("The linked protein record has no DOMAIN, REGION, SITE or BOND features annotated in its GenBank record.");
+          }
+        }
+        if (info.proteinError) addItem(`Protein record annotations could not be fetched: ${info.proteinError}`);
+      } else {
+        addItem("A protein accession is annotated, but no linked protein record could be retrieved.");
+      }
+    }
+
+    function renderProteinProperties(record) {
+      const list = element("proteinProperties");
+      list.replaceChildren();
+      const protein = record.ncbiInfo && record.ncbiInfo.cds && record.ncbiInfo.cds.translation
+        ? record.ncbiInfo.cds.translation
+        : record.protein;
+      const properties = proteinProperties(protein);
+      if (!properties) {
+        const item = document.createElement("li");
+        item.className = "quality-item warning";
+        item.textContent = "No standard amino-acid translation is available for this sequence.";
+        list.appendChild(item);
+        setText("foldNotice", "A reliable fold or secondary-structure prediction requires a dedicated structure-prediction method; it is not inferred by this page.");
+        return;
+      }
+      const charge = `${properties.netCharge >= 0 ? "+" : ""}${properties.netCharge.toFixed(2)} at pH 7 (estimated)`;
+      const items = [
+        `Protein length: ${properties.length} amino acids · approximate molecular mass ${properties.mass.toFixed(1)} Da.`,
+        `Estimated net charge: ${charge} · estimated isoelectric point (pI) ${properties.pI.toFixed(2)}.`,
+        `Kyte–Doolittle hydropathy: ${properties.hydropathy.toFixed(2)} · ${properties.hydrophobicPercent.toFixed(1)}% hydrophobic and ${properties.hydrophilicPercent.toFixed(1)}% hydrophilic residues by simple thresholds; this does not predict binding, localization or solvent response.`,
+        properties.cysteines >= 2
+          ? `${properties.cysteines} cysteines are present: disulfide bonds are chemically possible, but their formation and pairing cannot be determined from sequence alone.`
+          : properties.cysteines === 1
+            ? "One cysteine is present: an intramolecular disulfide bond is not possible from this sequence alone."
+            : "No cysteine residues are present: this polypeptide cannot form cysteine-based disulfide bonds.",
+      ];
+      for (const text of items) {
+        const item = document.createElement("li");
+        item.className = "quality-item";
+        item.textContent = text;
+        list.appendChild(item);
+      }
+      setText("foldNotice", record.ncbiInfo && record.ncbiInfo.proteinRecord
+        ? "Fold type is not predicted here. Check the linked NCBI protein record for existing annotations or submit the protein sequence to a validated structure-prediction service."
+        : "Fold type and interactions in hydrophobic/hydrophilic environments cannot be reliably inferred by these simple calculations. Use a validated structure-prediction and structural-analysis service for those results.");
+      if (record.type === "RNA" && record.proteinFrame) {
+        element("proteinCard").querySelector(".card-heading p").textContent =
+          record.ncbiInfo && record.ncbiInfo.cds && record.ncbiInfo.cds.translation
+            ? "Protein translation uses the annotated NCBI coding sequence."
+            : `Protein candidate translated from frame ${record.proteinFrame}; without an annotated CDS this remains a prediction from the supplied sequence.`;
+      }
+    }
+
+    function updateMoleculeInterface() {
+      const isRna = moleculeType === "RNA";
+      setText("sequenceLabel", `${moleculeType} sequence or FASTA`);
+      setText("sequenceHint", `Paste ${moleculeType} sequence or FASTA records. Each FASTA record is analyzed separately.`);
+      setText("resultsTitle", `${moleculeType} analysis results`);
+      setText("recordCaption", `Overview of the selected ${moleculeType} sequence`);
+      document.querySelectorAll(".metric-label").forEach((label) => {
+        if (label.textContent === "AT content" || label.textContent === "AU content") {
+          label.textContent = isRna ? "AU content" : "AT content";
+        }
+      });
+      document.querySelectorAll(".metric-note").forEach((note, index) => {
+        if (index === 1 || index === 2) note.textContent = `Calculated from valid ${isRna ? "A/C/G/U" : "A/C/G/T"} bases`;
+      });
+      document.querySelectorAll(".derived-toolbar .derived-note").forEach((note, index) => {
+        if (index === 0) note.textContent = `Whitespace removed; case normalized (${moleculeType})`;
+        if (index === 1) note.textContent = `Ambiguous symbols are represented as N (${isRna ? "RNA" : "DNA"} complement)`;
+        if (index === 2) note.textContent = isRna ? "RNA converted to its coding-DNA equivalent (U replaced with T)" : "T replaced with U";
+      });
+      element("proteinCard").querySelector(".card-heading p").textContent = isRna
+        ? "Translation is shown in the first reading frame; without a verified coding region it is only a candidate"
+        : "Sequence-derived estimates; not experimental measurements or a 3D structure prediction";
+    }
+
+    async function importNcbiSequence() {
+      const accession = element("ncbiAccession").value.trim();
+      if (!/^[A-Za-z0-9_.:-]+$/.test(accession)) {
+        setStatus("Enter a valid NCBI accession (letters, numbers, dots, underscores or hyphens).", "error");
+        return;
+      }
+      const requestId = ++importRequestId;
+      element("ncbiImportBtn").disabled = true;
+      setStatus(`Fetching ${accession} from NCBI…`, "neutral");
+      renderNcbiInfo(null);
+      try {
+        const fasta = await ncbiFetch("nuccore", accession, "fasta");
+        if (requestId !== importRequestId) return;
+        const records = parseRecords(fasta);
+        if (!records.length) throw new Error("NCBI returned an empty FASTA record.");
+        element("sequenceInput").value = records.map((record) => `>${record.header}\n${record.sequence}`).join("\n");
+        const hasU = records.some((record) => record.sequence.includes("U"));
+        moleculeType = hasU ? "RNA" : "DNA";
+        document.querySelector(`input[name="moleculeType"][value="${moleculeType}"]`).checked = true;
+        updateMoleculeInterface();
+        analyses = records.map((record) => analyzeRecord(record, moleculeType));
+        analyses[0].sourceAccession = accession;
+        selectedRecordIndex = 0;
+        renderSelectedRecord();
+        setStatus(`Imported ${accession} from NCBI · ${records.length} record${records.length === 1 ? "" : "s"}. Fetching linked annotations…`, "success");
+
+        const nucleotideGenbank = await ncbiFetch("nuccore", accession, "gb");
+        if (requestId !== importRequestId) return;
+        const nucleotideRecord = parseGenBankRecord(nucleotideGenbank);
+        const cds = nucleotideRecord.features.find((feature) => feature.key === "CDS" && feature.qualifiers.protein_id);
+        const info = {
+          accession: nucleotideRecord.accession || accession,
+          definition: nucleotideRecord.definition || records[0].header,
+          cds: cds ? {
+            product: cds.qualifiers.product || "",
+            proteinId: cds.qualifiers.protein_id,
+            translation: cds.qualifiers.translation || "",
+          } : null,
+          proteinRecord: null,
+        };
+        if (cds) {
+          try {
+            const proteinText = await ncbiFetch("protein", cds.qualifiers.protein_id, "gb");
+            info.proteinRecord = parseGenBankRecord(proteinText);
+          } catch (error) {
+            info.proteinError = error.message;
+          }
+        }
+        if (requestId !== importRequestId) return;
+        analyses[0].ncbiInfo = info;
+        renderSelectedRecord();
+        if (info.proteinError) setStatus(`Sequence imported; linked protein annotations unavailable: ${info.proteinError}`, "error");
+        else setStatus(`Imported ${accession} and loaded available NCBI protein annotations.`, "success");
+      } catch (error) {
+        if (requestId === importRequestId) {
+          setStatus(`${error.message} NCBI import may require opening this page from a local web server instead of file://.`, "error");
+          if (analyses.length) {
+            analyses[0].ncbiInfo = {
+              accession,
+              definition: analyses[0].header,
+              cds: null,
+              annotationError: error.message,
+            };
+            renderNcbiInfo(analyses[0].ncbiInfo, analyses[0]);
+          } else {
+            renderNcbiInfo(null);
+          }
+        }
+      } finally {
+        if (requestId === importRequestId) element("ncbiImportBtn").disabled = false;
+      }
+    }
+
+    function analyzeRecord(record, type = moleculeType) {
+      const validBases = type === "RNA" ? RNA_BASES : DNA_BASES;
+      const counts = countBases(record.sequence, validBases);
       const validTotal = Object.values(counts).reduce((sum, count) => sum + count, 0);
+      const dnaSequence = toDna(record.sequence, type);
+      const candidateOrfs = type === "RNA" ? findORFs(dnaSequence, 1) : [];
+      const selectedOrf = candidateOrfs[0] || null;
+      const protein = selectedOrf ? selectedOrf.protein : translate(record.sequence, type);
+      const cysteineCount = [...protein].filter((residue) => residue === "C").length;
       return {
         ...record,
+        type,
         counts,
         validTotal,
-        invalidChars: findInvalidCharacters(record.sequence),
+        invalidChars: findInvalidCharacters(record.sequence, validBases),
         gc: gcContent(counts, validTotal),
-        at: atContent(counts, validTotal),
-        reverse: reverseComplement(record.sequence),
-        mrna: transcribe(record.sequence),
-        protein: translate(record.sequence),
-        orfs: findORFs(record.sequence),
-        restrictionSites: findRestrictionSites(record.sequence),
+        at: atContent(counts, validTotal, type),
+        dnaSequence,
+        reverse: reverseComplement(record.sequence, type),
+        mrna: transcribe(record.sequence, type),
+        protein,
+        proteinFrame: selectedOrf ? selectedOrf.frame : type === "RNA" ? "+1 (no complete ORF)" : "+1",
+        orfs: findORFs(dnaSequence),
+        restrictionSites: type === "DNA" ? findRestrictionSites(record.sequence) : null,
+        proteinProperties: proteinProperties(protein),
+        cysteineCount,
       };
     }
 
@@ -563,7 +937,7 @@
       bar.setAttribute("aria-label", `Base composition for ${record.header}`);
       setText("validBaseTotal", `${record.validTotal} valid ${record.validTotal === 1 ? "base" : "bases"}`);
 
-      for (const base of VALID_BASES) {
+      for (const base of record.type === "RNA" ? RNA_BASES : DNA_BASES) {
         const count = record.counts[base];
         const percentage = record.validTotal ? (count / record.validTotal) * 100 : 0;
         const segment = document.createElement("span");
@@ -602,15 +976,15 @@
       if (!record.validTotal) {
         items.push({ text: "No valid A, C, G or T bases were found.", tone: "error" });
       } else {
-        items.push({ text: `Recognized ${record.validTotal} of ${record.sequence.length} sequence symbols as valid DNA bases.`, tone: "success" });
+        items.push({ text: `Recognized ${record.validTotal} of ${record.sequence.length} sequence symbols as valid ${record.type} bases.`, tone: "success" });
       }
       if (record.invalidChars.length) {
         const symbols = record.invalidChars.map((char) => char === " " ? "space" : char).join(", ");
         items.push({ text: `Ambiguous or invalid symbols: ${symbols}. They are excluded from composition percentages.`, tone: "warning" });
       } else {
-        items.push({ text: "All sequence symbols are valid DNA bases (A, C, G, T).", tone: "success" });
+        items.push({ text: `All sequence symbols are valid ${record.type} bases (${record.type === "RNA" ? "A, C, G, U" : "A, C, G, T"}).`, tone: "success" });
       }
-      items.push({ text: `GC ${record.gc.toFixed(2)}% + AT ${record.at.toFixed(2)}% = ${(record.gc + record.at).toFixed(2)}% of valid bases.`, tone: "success" });
+      items.push({ text: `GC ${record.gc.toFixed(2)}% + ${record.type === "RNA" ? "AU" : "AT"} ${record.at.toFixed(2)}% = ${(record.gc + record.at).toFixed(2)}% of valid bases.`, tone: "success" });
       for (const item of items) {
         const li = document.createElement("li");
         li.className = `quality-item ${item.tone === "warning" ? "warning" : item.tone === "error" ? "error" : ""}`;
@@ -624,8 +998,10 @@
       const siteMap = element("siteMap");
       siteMap.querySelectorAll(".site-marker").forEach((marker) => marker.remove());
       list.replaceChildren();
-      const matches = Object.entries(record.restrictionSites)
-        .flatMap(([enzyme, details]) => details.positions.map((position) => ({ enzyme, recognitionSite: details.recognitionSite, position })));
+      const matches = record.restrictionSites
+        ? Object.entries(record.restrictionSites).flatMap(([enzyme, details]) =>
+          details.positions.map((position) => ({ enzyme, recognitionSite: details.recognitionSite, position })))
+        : [];
       setText("restrictionSummary", `${matches.length} ${matches.length === 1 ? "match" : "matches"}`);
       setText("siteMapStart", record.sequence.length ? "1" : "0");
       setText("siteMapEnd", String(record.sequence.length));
@@ -644,7 +1020,9 @@
       if (!matches.length) {
         const empty = document.createElement("li");
         empty.className = "empty-state";
-        empty.textContent = "No known restriction sites were found in this sequence.";
+        empty.textContent = record.type === "RNA"
+          ? "Restriction-site lookup is only applied to DNA sequences; an RNA-to-DNA equivalent is not sufficient to claim genomic matches."
+          : "No known restriction sites were found in this sequence.";
         list.appendChild(empty);
         return;
       }
@@ -707,20 +1085,38 @@
       if (!analyses.length) return;
       const record = analyses[selectedRecordIndex];
       renderRecordTabs();
-      setText("recordCaption", analyses.length > 1 ? `Record ${selectedRecordIndex + 1} of ${analyses.length} · ${record.header}` : "Overview of the selected sequence");
-      setText("lengthValue", `${record.sequence.length} bp`);
+      setText("recordCaption", analyses.length > 1
+        ? `Record ${selectedRecordIndex + 1} of ${analyses.length} · ${record.header}`
+        : `Overview of ${record.type} sequence · ${record.header}`);
+      setText("lengthValue", `${record.sequence.length} ${record.type === "RNA" ? "nt" : "bp"}`);
       setText("gcValue", `${record.gc.toFixed(2)}%`);
       setText("atValue", `${record.at.toFixed(2)}%`);
       setText("orfValue", String(record.orfs.length));
       setText("cleanedOutput", record.sequence);
       setText("revCompOutput", record.reverse);
       setText("mrnaOutput", record.mrna);
-      setText("proteinOutput", record.protein);
+      setText("proteinOutput", record.ncbiInfo && record.ncbiInfo.cds && record.ncbiInfo.cds.translation
+        ? record.ncbiInfo.cds.translation
+        : record.protein);
+      const derivedSummaries = document.querySelectorAll(".content-grid > article:last-child details summary");
+      if (derivedSummaries.length === 4) {
+        derivedSummaries[0].textContent = `Cleaned ${record.type} sequence`;
+        derivedSummaries[2].textContent = record.type === "RNA" ? "DNA equivalent (U → T)" : "mRNA transcript";
+        derivedSummaries[3].textContent = `Protein translation · frame ${record.proteinFrame}`;
+      }
+      const derivedNotes = document.querySelectorAll(".content-grid > article:last-child .derived-note");
+      if (derivedNotes.length === 4) {
+        derivedNotes[3].textContent = record.ncbiInfo && record.ncbiInfo.cds && record.ncbiInfo.cds.translation
+          ? "Translation from the annotated NCBI coding sequence"
+          : `Translated in frame ${record.proteinFrame}`;
+      }
       renderSummary(record);
       renderComposition(record);
       renderQuality(record);
       renderRestrictionSites(record);
       renderORFs(record);
+      renderProteinProperties(record);
+      renderNcbiInfo(record.ncbiInfo, record);
     }
 
     function clearResults() {
@@ -728,7 +1124,7 @@
       element("recordTabs").replaceChildren();
       element("recordTabs").hidden = true;
       setText("recordCaption", "Overview of the selected sequence");
-      setText("lengthValue", "0 bp");
+      setText("lengthValue", `0 ${moleculeType === "RNA" ? "nt" : "bp"}`);
       setText("gcValue", "0.00%");
       setText("atValue", "0.00%");
       setText("orfValue", "0");
@@ -739,6 +1135,8 @@
       setText("revCompOutput", "");
       setText("mrnaOutput", "");
       setText("proteinOutput", "");
+      element("proteinProperties").replaceChildren();
+      renderNcbiInfo(null);
       element("compositionBar").replaceChildren();
       element("baseLegend").replaceChildren();
       element("sequenceQuality").replaceChildren();
@@ -756,10 +1154,10 @@
       if (!records.length) {
         analyses = [];
         clearResults();
-        setStatus("Enter a DNA sequence or at least one non-empty FASTA record.", "error");
+        setStatus(`Enter a ${moleculeType} sequence or at least one non-empty FASTA record.`, "error");
         return;
       }
-      analyses = records.map(analyzeRecord);
+      analyses = records.map((record) => analyzeRecord(record, moleculeType));
       selectedRecordIndex = 0;
       renderSelectedRecord();
       setStatus(`Analysis complete for ${analyses.length} ${analyses.length === 1 ? "sequence" : "FASTA records"}.`, "success");
@@ -773,16 +1171,21 @@
 
     function buildReport(records) {
       const sections = records.map((record, index) => {
-        const restrictionEntries = Object.entries(record.restrictionSites)
+        const restrictionEntries = Object.entries(record.restrictionSites || {})
           .filter(([, details]) => details.positions.length)
           .map(([enzyme, details]) => `${enzyme} (${details.recognitionSite}): ${details.positions.join(", ")}`);
+        const proteinSequence = record.ncbiInfo && record.ncbiInfo.cds && record.ncbiInfo.cds.translation
+          ? record.ncbiInfo.cds.translation
+          : record.protein;
+        const properties = proteinProperties(proteinSequence);
         return [
           `Record ${index + 1}: ${record.header}`,
           "=".repeat(Math.min(60, `Record ${index + 1}: ${record.header}`.length)),
-          `Length: ${record.sequence.length} bp`,
+          `Molecule: ${record.type}`,
+          `Length: ${record.sequence.length} ${record.type === "RNA" ? "nt" : "bp"}`,
           `Valid bases: ${record.validTotal}`,
           `GC content: ${record.gc.toFixed(2)}%`,
-          `AT content: ${record.at.toFixed(2)}%`,
+          `${record.type === "RNA" ? "AU" : "AT"} content: ${record.at.toFixed(2)}%`,
           `Invalid characters: ${record.invalidChars.length ? record.invalidChars.join(", ") : "none"}`,
           "",
           "Base counts:",
@@ -792,7 +1195,7 @@
           ...(record.orfs.slice(0, 10).map((orf) => `Frame ${orf.frame} | Positions ${orf.start}-${orf.end} | ${orf.lengthAa} aa | ${orf.protein}`)),
           "",
           "Restriction sites:",
-          ...(restrictionEntries.length ? restrictionEntries : ["None"]),
+          ...(record.type === "RNA" ? ["Not calculated for RNA; sequence matching does not establish a genomic DNA location."] : restrictionEntries.length ? restrictionEntries : ["None"]),
           "",
           "Cleaned sequence:",
           formatWrapped(record.sequence),
@@ -800,11 +1203,35 @@
           "Reverse complement:",
           formatWrapped(record.reverse),
           "",
-          "mRNA transcript:",
+          record.type === "RNA" ? "DNA equivalent (U replaced with T):" : "mRNA transcript:",
           formatWrapped(record.mrna),
           "",
           "Protein translation:",
-          formatWrapped(record.protein),
+          formatWrapped(proteinSequence),
+          "",
+          "Protein properties (approximate sequence estimates):",
+          ...(properties ? [
+            `Length: ${properties.length} aa`,
+            `Molecular mass: ${properties.mass.toFixed(1)} Da`,
+            `Net charge at pH 7: ${properties.netCharge.toFixed(2)}`,
+            `Estimated pI: ${properties.pI.toFixed(2)}`,
+            `Kyte-Doolittle hydropathy: ${properties.hydropathy.toFixed(2)}`,
+            `Cysteines: ${properties.cysteines}`,
+          ] : ["No standard amino-acid translation available."]),
+          "",
+          "NCBI annotations:",
+          ...(record.ncbiInfo ? [
+            `Nucleotide accession: ${record.ncbiInfo.accession || "unknown"}`,
+            ...(record.ncbiInfo.cds ? [
+              `CDS product: ${record.ncbiInfo.cds.product || "unnamed"}`,
+              `Protein accession: ${record.ncbiInfo.cds.proteinId || "not provided"}`,
+            ] : ["No annotated CDS linked to this nucleotide record."]),
+            ...(record.ncbiInfo.proteinRecord
+              ? record.ncbiInfo.proteinRecord.features
+                .filter((feature) => ["REGION", "SITE", "BOND", "MOTIF", "NP_BIND", "DOMAIN", "ACT_SITE"].includes(feature.key.toUpperCase()))
+                .map((feature) => `${feature.key} (${feature.location}): ${feature.qualifiers.note || feature.qualifiers.region_name || feature.qualifiers.site_type || ""}`)
+              : ["No linked protein feature annotations retrieved."]),
+          ] : ["No NCBI accession linked."]),
         ].join("\n");
       });
       return `BioSeq Analyzer Report\n${"=".repeat(22)}\n\n${sections.join("\n\n")}\n`;
@@ -816,7 +1243,13 @@
         setStatus("Nothing to export: no sequence was found.", "error");
         return;
       }
-      const report = buildReport(records.map(analyzeRecord));
+      const reportRecords = records.map((record) => {
+        const analyzed = analyzeRecord(record, moleculeType);
+        const previous = analyses.find((item) => item.header === record.header && item.sequence === record.sequence);
+        if (previous && previous.ncbiInfo) analyzed.ncbiInfo = previous.ncbiInfo;
+        return analyzed;
+      });
+      const report = buildReport(reportRecords);
       const blob = new Blob([report], { type: "text/plain;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -860,16 +1293,33 @@
 
     function loadExample() {
       element("sequenceInput").value = "ATGGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGATAG";
+      moleculeType = "DNA";
+      document.querySelector('input[name="moleculeType"][value="DNA"]').checked = true;
+      updateMoleculeInterface();
       analyzeSequence();
     }
 
     element("analyzeBtn").addEventListener("click", analyzeSequence);
     element("exampleBtn").addEventListener("click", loadExample);
     element("exportBtn").addEventListener("click", exportReport);
+    element("ncbiImportBtn").addEventListener("click", importNcbiSequence);
+    element("ncbiAccession").addEventListener("keydown", (event) => {
+      if (event.key === "Enter") importNcbiSequence();
+    });
+    document.querySelectorAll('input[name="moleculeType"]').forEach((input) => {
+      input.addEventListener("change", () => {
+        moleculeType = input.value;
+        updateMoleculeInterface();
+        analyses = [];
+        renderNcbiInfo(null);
+        analyzeSequence();
+      });
+    });
     element("fileInput").addEventListener("change", handleFileUpload);
     document.querySelectorAll("[data-copy]").forEach((button) => {
       button.addEventListener("click", () => copyOutput(button));
     });
+    updateMoleculeInterface();
     analyzeSequence();
   </script>
 </body>
