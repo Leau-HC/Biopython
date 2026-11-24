@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BioSeq Analyzer</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel-alt: #1f2937;
+      --card: #0b1220;
+      --border: #334155;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --primary: #38bdf8;
+      --primary-strong: #0ea5e9;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --danger: #f87171;
+      --shadow: rgba(15, 23, 42, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #020817 0%, #0f172a 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 3vw, 2.8rem);
+      letter-spacing: 0.04em;
+    }
+
+    .badge {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: var(--primary);
+      font-weight: 600;
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+
+    .panel {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 18px 35px var(--shadow);
+      padding: 20px;
+      margin-bottom: 22px;
+    }
+
+    .input-wrap {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 22px;
+      align-items: start;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 700;
+      color: #cbd5e1;
+    }
+
+    textarea, input {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text);
+      padding: 14px 16px;
+      font: inherit;
+      resize: vertical;
+    }
+
+    textarea {
+      min-height: 150px;
+      line-height: 1.5;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .upload-box {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .file-input {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(148, 163, 184, 0.08);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+
+    .file-input input {
+      padding: 0;
+      background: transparent;
+      border: none;
+      color: var(--text);
+    }
+
+    button {
+      appearance: none;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .primary {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-strong) 100%);
+      color: #082f49;
+    }
+
+    .secondary {
+      background: rgba(148, 163, 184, 0.12);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .metric {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .metric .label {
+      color: var(--muted);
+      font-size: 0.82rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .metric .value {
+      font-size: clamp(1.2rem, 2vw, 1.8rem);
+      font-weight: 800;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 22px;
+    }
+
+    .card {
+      background: rgba(11, 18, 32, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+    }
+
+    .card h3 {
+      margin: 0 0 12px;
+      font-size: 1.15rem;
+    }
+
+    .counts {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(100px, 1fr));
+      gap: 10px;
+    }
+
+    .count-item {
+      background: rgba(148, 163, 184, 0.06);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    .count-item strong {
+      display: block;
+      font-size: 1.2rem;
+      margin-top: 6px;
+    }
+
+    .result-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 10px;
+    }
+
+    .result-list li {
+      background: rgba(148, 163, 184, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: var(--text);
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    .output-box {
+      margin-top: 10px;
+      background: rgba(2, 6, 23, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      color: #dbeafe;
+      overflow-wrap: anywhere;
+      line-height: 1.5;
+      min-height: 48px;
+    }
+
+    .chart {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(90px, 1fr));
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .chart-bar {
+      background: rgba(148, 163, 184, 0.06);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .chart-visual {
+      height: 120px;
+      border-radius: 10px;
+      display: flex;
+      align-items: end;
+      justify-content: center;
+      margin-bottom: 10px;
+      background: rgba(15, 23, 42, 0.75);
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.15);
+    }
+
+    .chart-fill {
+      width: 100%;
+      border-radius: 8px 8px 0 0;
+      min-height: 4px;
+    }
+
+    .empty {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .mini {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 8px;
+      display: block;
+    }
+
+    @media (max-width: 760px) {
+      .input-wrap {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <h1>BioSeq Analyzer</h1>
+      <div class="badge">DNA Analysis Toolkit</div>
+    </div>
+
+    <div class="panel">
+      <div class="input-wrap">
+        <div>
+          <label for="sequenceInput">DNA sequence or FASTA text</label>
+          <textarea id="sequenceInput" placeholder="Paste a DNA sequence here, for example: ATGGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGATAG">ATGGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGATAG</textarea>
+        </div>
+
+        <div>
+          <label>Actions</label>
+          <div class="actions">
+            <button class="primary" id="analyzeBtn">Analyze sequence</button>
+            <button class="secondary" id="exampleBtn">Load example</button>
+            <button class="secondary" id="exportBtn">Export report</button>
+          </div>
+          <div class="upload-box">
+            <label class="file-input" for="fileInput">
+              <input id="fileInput" type="file" accept=".txt,.fa,.fasta,.seq,.dna" />
+              <span>Upload file</span>
+            </label>
+          </div>
+          <div class="mini" id="statusText">Ready to analyze.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="metrics" id="summaryMetrics">
+      <div class="metric">
+        <div class="label">Length</div>
+        <div class="value" id="lengthValue">0 bp</div>
+      </div>
+      <div class="metric">
+        <div class="label">GC%</div>
+        <div class="value" id="gcValue">0.00%</div>
+      </div>
+      <div class="metric">
+        <div class="label">AT%</div>
+        <div class="value" id="atValue">0.00%</div>
+      </div>
+      <div class="metric">
+        <div class="label">ORFs</div>
+        <div class="value" id="orfValue">0</div>
+      </div>
+    </div>
+
+    <div class="grid" style="margin-top: 22px;">
+      <div class="card">
+        <h3>Base counts</h3>
+        <div class="counts" id="countsGrid"></div>
+      </div>
+
+      <div class="card">
+        <h3>Sequence quality</h3>
+        <ul class="result-list" id="sequenceQuality"></ul>
+      </div>
+
+      <div class="card" style="grid-column: 1 / -1;">
+        <h3>Base composition chart</h3>
+        <div id="baseChart" class="chart"></div>
+      </div>
+
+      <div class="card" style="grid-column: 1 / -1;">
+        <h3>Derived sequences</h3>
+        <div class="result-list">
+          <li>
+            <strong>Cleaned sequence</strong>
+            <div class="output-box" id="cleanedOutput"></div>
+          </li>
+          <li>
+            <strong>Reverse complement</strong>
+            <div class="output-box" id="revCompOutput"></div>
+          </li>
+          <li>
+            <strong>mRNA transcript</strong>
+            <div class="output-box" id="mrnaOutput"></div>
+          </li>
+          <li>
+            <strong>Protein translation</strong>
+            <div class="output-box" id="proteinOutput"></div>
+          </li>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Open reading frames</h3>
+        <ul class="result-list" id="orfResults"></ul>
+      </div>
+
+      <div class="card">
+        <h3>Restriction sites</h3>
+        <ul class="result-list" id="restrictionResults"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const VALID_BASES = "ACGT";
+    const COMPLEMENT = { A: "T", T: "A", G: "C", C: "G" };
+    const BASES = "TCAG";
+    const CODONS = [];
+    for (const a of BASES) {
+      for (const b of BASES) {
+        for (const c of BASES) {
+          CODONS.push(a + b + c);
+        }
+      }
+    }
+    const AMINO_ACIDS = "FFLLSSSSYY**CC*WLLLLPPPPHHQQRRRRIIIMTTTTNNKKSSRRVVVVAAAADDEEGGGG";
+    const CODON_TABLE = {};
+    for (let i = 0; i < CODONS.length; i++) {
+      CODON_TABLE[CODONS[i]] = AMINO_ACIDS[i];
+    }
+
+    const STOP_CODONS = new Set(["TAA", "TAG", "TGA"]);
+    const RESTRICTION_ENZYMES = {
+      BamHI: "GGATCC",
+      EcoRI: "GAATTC",
+      HindIII: "AAGCTT",
+      KpnI: "GGTACC",
+      NcoI: "CCATGG",
+      NdeI: "CATATG",
+      NotI: "GCGGCCGC",
+      PstI: "CTGCAG",
+      SacI: "GAGCTC",
+      SmaI: "CCCGGG",
+      XbaI: "TCTAGA",
+      XhoI: "CTCGAG",
+    };
+
+    function cleanSequence(rawText) {
+      const lines = rawText.split(/\r?\n/);
+      const sequenceLines = lines.filter((line) => !line.trim().startsWith(">"));
+      return sequenceLines.join("").replace(/\s+/g, "").toUpperCase();
+    }
+
+    function findInvalidCharacters(sequence) {
+      return [...new Set(sequence.split("").filter((char) => !VALID_BASES.includes(char)))].sort();
+    }
+
+    function nucleotideCounts(sequence) {
+      const counts = {};
+      for (const base of VALID_BASES) {
+        counts[base] = sequence.split(base).length - 1;
+      }
+      return counts;
+    }
+
+    function gcContent(sequence) {
+      if (!sequence) return 0;
+      const gc = (sequence.match(/G|C/g) || []).length;
+      return (gc / sequence.length) * 100;
+    }
+
+    function atContent(sequence) {
+      if (!sequence) return 0;
+      const at = (sequence.match(/A|T/g) || []).length;
+      return (at / sequence.length) * 100;
+    }
+
+    function reverseComplement(sequence) {
+      return sequence.split("").reverse().map((base) => COMPLEMENT[base]).join("");
+    }
+
+    function transcribe(sequence) {
+      return sequence.replace(/T/g, "U");
+    }
+
+    function translate(sequence) {
+      let protein = "";
+      for (let i = 0; i <= sequence.length - 3; i += 3) {
+        const codon = sequence.slice(i, i + 3);
+        protein += CODON_TABLE[codon] || "";
+      }
+      return protein;
+    }
+
+    function parseFASTA(rawText) {
+      const records = [];
+      let header = null;
+      let chunks = [];
+
+      for (const line of rawText.split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+
+        if (trimmed.startsWith(">")) {
+          if (header !== null || chunks.length) {
+            records.push({ header: header || "Unnamed sequence", sequence: chunks.join("").replace(/\s+/g, "").toUpperCase() });
+          }
+          header = trimmed.slice(1).trim() || "Unnamed sequence";
+          chunks = [];
+        } else {
+          chunks.push(trimmed.replace(/\s+/g, ""));
+        }
+      }
+
+      if (header !== null || chunks.length) {
+        records.push({ header: header || "Unnamed sequence", sequence: chunks.join("").replace(/\s+/g, "").toUpperCase() });
+      }
+
+      return records;
+    }
+
+    function findORFs(sequence, minProteinLength = 30) {
+      const seqLen = sequence.length;
+      const orfs = [];
+
+      for (const [strand, strandSeq] of [["+", sequence], ["-", reverseComplement(sequence)]]) {
+        for (let frame = 0; frame < 3; frame++) {
+          let i = frame;
+
+          while (i + 3 <= seqLen) {
+            if (strandSeq.slice(i, i + 3) === "ATG") {
+              let stopIndex = null;
+
+              for (let j = i; j <= seqLen - 3; j += 3) {
+                if (STOP_CODONS.has(strandSeq.slice(j, j + 3))) {
+                  stopIndex = j;
+                  break;
+                }
+              }
+
+              if (stopIndex === null) break;
+
+              const protein = translate(strandSeq.slice(i, stopIndex));
+              if (protein.length >= minProteinLength) {
+                let start, end;
+                if (strand === "+") {
+                  start = i + 1;
+                  end = stopIndex + 3;
+                } else {
+                  start = seqLen - i;
+                  end = seqLen - stopIndex - 2;
+                }
+
+                orfs.push({
+                  Frame: `${strand}${frame + 1}`,
+                  Start: start,
+                  End: end,
+                  "Length (nt)": stopIndex + 3 - i,
+                  "Length (aa)": protein.length,
+                  Protein: protein,
+                });
+              }
+
+              i = stopIndex;
+            }
+            i += 3;
+          }
+        }
+      }
+
+      return orfs.sort((a, b) => b["Length (aa)"] - a["Length (aa)"]);
+    }
+
+    function findRestrictionSites(sequence, enzymes = RESTRICTION_ENZYMES) {
+      const sites = {};
+      for (const [enzyme, site] of Object.entries(enzymes)) {
+        const positions = [];
+        let index = sequence.indexOf(site);
+        while (index !== -1) {
+          positions.push(index + 1);
+          index = sequence.indexOf(site, index + 1);
+        }
+        sites[enzyme] = positions;
+      }
+      return sites;
+    }
+
+    function renderList(container, items, emptyText = "No results") {
+      if (!items || !items.length) {
+        container.innerHTML = `<li class="empty">${emptyText}</li>`;
+        return;
+      }
+
+      container.innerHTML = items
+        .map((item) => `<li>${item}</li>`)
+        .join("");
+    }
+
+    function buildBaseChart(counts) {
+      const total = Object.values(counts).reduce((sum, value) => sum + value, 0) || 1;
+      const baseColors = {
+        A: "#38bdf8",
+        C: "#34d399",
+        G: "#fbbf24",
+        T: "#f87171",
+      };
+
+      const bars = Object.entries(counts)
+        .map(([base, count]) => {
+          const height = (count / total) * 100;
+          return `
+            <div class="chart-bar">
+              <div class="chart-visual">
+                <div class="chart-fill" style="height: ${height}%; background: ${baseColors[base] || '#94a3b8'};"></div>
+              </div>
+              <strong>${base}</strong><br>
+              <span>${count}</span>
+            </div>
+          `;
+        })
+        .join("");
+
+      document.getElementById("baseChart").innerHTML = bars;
+    }
+
+    function buildReport(cleaned, counts, gc, at, revComp, mrna, protein, orfs, restrictionSites, invalidChars) {
+      const restrictionEntries = Object.entries(restrictionSites)
+        .filter(([, positions]) => positions.length)
+        .map(([enzyme, positions]) => `${enzyme}: ${positions.join(", ")}`);
+
+      return [
+        "BioSeq Analyzer Report",
+        "======================",
+        `Length: ${cleaned.length} bp`,
+        `GC content: ${gc.toFixed(2)}%`,
+        `AT content: ${at.toFixed(2)}%`,
+        invalidChars.length ? `Invalid characters: ${invalidChars.join(", ")}` : "Invalid characters: none",
+        "",
+        "Base counts:",
+        ...Object.entries(counts).map(([base, count]) => `${base}: ${count}`),
+        "",
+        `Reverse complement: ${revComp}`,
+        `mRNA transcript: ${mrna}`,
+        `Protein translation: ${protein}`,
+        "",
+        `Open reading frames (${orfs.length}):`,
+        ...orfs.slice(0, 10).map((orf) => `Frame ${orf.Frame} | Start ${orf.Start} | End ${orf.End} | Length ${orf["Length (aa)"]} aa | ${orf.Protein}`),
+        "",
+        "Restriction sites:",
+        ...(restrictionEntries.length ? restrictionEntries : ["None"]),
+      ].join("\n");
+    }
+
+    function exportReport() {
+      const rawText = document.getElementById("sequenceInput").value;
+      const cleaned = cleanSequence(rawText);
+      if (!cleaned) {
+        setStatus("Nothing to export yet.", "error");
+        return;
+      }
+
+      const invalidChars = findInvalidCharacters(cleaned);
+      const counts = nucleotideCounts(cleaned);
+      const gc = gcContent(cleaned);
+      const at = atContent(cleaned);
+      const revComp = reverseComplement(cleaned);
+      const mrna = transcribe(cleaned);
+      const protein = translate(cleaned);
+      const orfs = findORFs(cleaned, 30);
+      const restrictionSites = findRestrictionSites(cleaned);
+      const report = buildReport(cleaned, counts, gc, at, revComp, mrna, protein, orfs, restrictionSites, invalidChars);
+      const blob = new Blob([report], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "bioseq-report.txt";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      setStatus("Report exported as a text file.", "success");
+    }
+
+    function handleFileUpload(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target.result || "";
+        document.getElementById("sequenceInput").value = content;
+        analyzeSequence();
+        setStatus(`Loaded file: ${file.name}`, "success");
+      };
+      reader.readAsText(file);
+    }
+
+    function setStatus(message, tone = "neutral") {
+      const statusText = document.getElementById("statusText");
+      statusText.textContent = message;
+      statusText.style.color = tone === "error" ? "#fca5a5" : tone === "success" ? "#86efac" : "#cbd5e1";
+    }
+
+    function analyzeSequence() {
+      const rawText = document.getElementById("sequenceInput").value;
+      const cleaned = cleanSequence(rawText);
+
+      if (!cleaned) {
+        setStatus("Please enter a DNA sequence or FASTA text.", "error");
+        return;
+      }
+
+      const invalidChars = findInvalidCharacters(cleaned);
+      const counts = nucleotideCounts(cleaned);
+      const gc = gcContent(cleaned);
+      const at = atContent(cleaned);
+      const revComp = reverseComplement(cleaned);
+      const mrna = transcribe(cleaned);
+      const protein = translate(cleaned);
+      const orfs = findORFs(cleaned, 30);
+      const restrictionSites = findRestrictionSites(cleaned);
+
+      document.getElementById("lengthValue").textContent = `${cleaned.length} bp`;
+      document.getElementById("gcValue").textContent = `${gc.toFixed(2)}%`;
+      document.getElementById("atValue").textContent = `${at.toFixed(2)}%`;
+      document.getElementById("orfValue").textContent = orfs.length;
+
+      const countItems = Object.entries(counts)
+        .map(([base, count]) => `<div class="count-item"><span>${base}</span><strong>${count}</strong></div>`)
+        .join("");
+      document.getElementById("countsGrid").innerHTML = countItems;
+      buildBaseChart(counts);
+
+      const quality = [];
+      if (invalidChars.length) {
+        quality.push(`Invalid characters found: ${invalidChars.join(", ")}`);
+      } else {
+        quality.push("Only valid DNA bases were found (A, C, G, T). ");
+      }
+      quality.push(`GC content: ${gc.toFixed(2)}%`);
+      quality.push(`AT content: ${at.toFixed(2)}%`);
+      renderList(document.getElementById("sequenceQuality"), quality.map((item) => item), "No sequence quality issues detected.");
+
+      document.getElementById("cleanedOutput").textContent = cleaned || "No sequence";
+      document.getElementById("revCompOutput").textContent = revComp || "No sequence";
+      document.getElementById("mrnaOutput").textContent = mrna || "No sequence";
+      document.getElementById("proteinOutput").textContent = protein || "No protein translation";
+
+      const orfItems = orfs.length
+        ? orfs.slice(0, 10).map((orf) => `Frame ${orf.Frame} | Start ${orf.Start} | End ${orf.End} | Length ${orf["Length (aa)"]} aa | ${orf.Protein}`)
+        : ["No open reading frames longer than 30 amino acids were found."];
+      renderList(document.getElementById("orfResults"), orfItems, "No ORFs found.");
+
+      const restrictionItems = Object.entries(restrictionSites)
+        .filter(([, positions]) => positions.length)
+        .map(([enzyme, positions]) => `${enzyme}: ${positions.join(", ")}`);
+      renderList(document.getElementById("restrictionResults"), restrictionItems.length ? restrictionItems : ["No known restriction sites were found."], "No matches found.");
+
+      const fastaRecords = parseFASTA(rawText);
+      if (fastaRecords.length > 1) {
+        setStatus(`Analyzed ${fastaRecords.length} FASTA records successfully.`, "success");
+      } else {
+        setStatus("Sequence analysis complete.", "success");
+      }
+    }
+
+    function loadExample() {
+      document.getElementById("sequenceInput").value = "ATGGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGATAG";
+      analyzeSequence();
+    }
+
+    document.getElementById("analyzeBtn").addEventListener("click", analyzeSequence);
+    document.getElementById("exampleBtn").addEventListener("click", loadExample);
+    document.getElementById("exportBtn").addEventListener("click", exportReport);
+    document.getElementById("fileInput").addEventListener("change", handleFileUpload);
+    window.addEventListener("DOMContentLoaded", analyzeSequence);
+  </script>
+</body>
+</html>
